@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebIdentityApi", "WebIdentityApi.csproj", "{B4CCA441-FC2C-4FEE-9653-CF660D423921}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B4CCA441-FC2C-4FEE-9653-CF660D423921}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4CCA441-FC2C-4FEE-9653-CF660D423921}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4CCA441-FC2C-4FEE-9653-CF660D423921}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4CCA441-FC2C-4FEE-9653-CF660D423921}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D2DBD188-AE2D-4B88-A333-DF1C95980A07}
+	EndGlobalSection
+EndGlobal
