@@ -6,13 +6,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using WebIdentityApi.DTOs.Account;
 using WebIdentityApi.DTOs.Admin.Account;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebIdentityApi.Controllers
 {
@@ -25,7 +28,10 @@ namespace WebIdentityApi.Controllers
         private readonly UserManager<User> _userManager;
         private readonly EmailService _emailService;
         private IConfiguration _config;
-        public AdminController(UserManager<User> userManager, JwtService jwtService, EmailService emailService, IConfiguration config)
+        public AdminController(UserManager<User> userManager,
+            JwtService jwtService,
+            EmailService emailService,
+            IConfiguration config)
         {
             _userManager = userManager;
             _jwtService = jwtService;
@@ -79,21 +85,71 @@ namespace WebIdentityApi.Controllers
         public async Task<ActionResult<StaffDto>> GetStaff(string id)
         {
             var staff = await _userManager.FindByIdAsync(id);
-            if (staff == null) return BadRequest("Staff not found !");
-            var staffDto = new StaffDto
+            if (staff == null) return NotFound("Staff not found !");
+            try
             {
-                Email = staff.Email,
-                Id = staff.Id,
-                FullName = staff.FullName
-            };
-            return Ok(staffDto);
+                var staffDto = new StaffDto
+                {
+                    Email = staff.Email,
+                    Id = staff.Id,
+                    FullName = staff.FullName
+                };
+                return Ok(staffDto);
+
+            }
+            catch (Exception)
+            {
+                return BadRequest("Error !");
+            }
+
         }
 
-        //[HttpPut("update-staff/{id}")]
-        //public async Task<IActionResult> UpdateStaff (string id)
-        //{
+        [HttpPut("update-staff/{id}")]
+        public async Task<IActionResult> UpdateStaff(string id, UpdateStaffDto model)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound("Staff not found !");
+            try
+            {
+                bool isStaff = await CheckStaffRoleAsync(user);
+                if (isStaff)
+                {
+                    user.FullName = model.FullName;
+                    user.Address = model.Address;
+                    user.PhoneNumber = model.Phone;
+                    var result = await _userManager.UpdateAsync(user);
+                    if (!result.Succeeded) return BadRequest(result.Errors);
+                    return Ok(new { title = "Success", message = "Update staff successfully " });
+                }
+                return BadRequest("Access denied !");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { title = "Error", message = "An unexpected error occurred. Please try again later." });
+            }
+        }
 
-        //}
+        [HttpPost("reset-password/{id}")]
+        public async Task<IActionResult> ResetPassword(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return BadRequest("Error, Staff not found !");
+            if (!await CheckStaffRoleAsync(user)) return BadRequest("Access Denied");
+            if (user.EmailConfirmed == false) return BadRequest("Please confirm your email first");
+            try
+            {
+                if (await SendForgotPasswordOrUserName(user))
+                {
+                    return Ok(new JsonResult(new { title = "Success", message = "Reset password successfully" }));
+                }
+                return BadRequest("An occured error, please try again later.");
+            }
+            catch (Exception)
+            {
+                return BadRequest("An occured error, please try again later.");
+
+            }
+        }
 
         #region Private Helper Method
 
@@ -139,6 +195,29 @@ namespace WebIdentityApi.Controllers
             // Combine all and shuffle
             string result = upperChar.ToString() + lowerChar + specialChar + numberString;
             return new string(result.ToCharArray().OrderBy(c => random.Next()).ToArray());
+        }
+
+        private async Task<bool> SendForgotPasswordOrUserName(User user)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var url = $"{_config["JWT:ClientUrl"]}/{_config["Email:ResetPasswordPath"]}?token={token}&email={user.Email}";
+            var body = $"<p>Hello: {user.FullName}</p> " +
+                $"<p>Please click <a href =\"{url}\">here</a> to reset your password</p>" +
+                "<p>Thank you</p>" +
+                $"<br>{_config["Email:ApplicationName"]}";
+
+            var emaiSend = new EmailSendDto(user.Email, "RESET PASSWORD", body);
+
+            return await _emailService.SendEmail(emaiSend);
+        }
+
+        private async Task<bool> CheckStaffRoleAsync(User user)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            bool isStaff = roles.Any(r => r == "Staff");
+
+            return isStaff;
         }
         #endregion
     }
