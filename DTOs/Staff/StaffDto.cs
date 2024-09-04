@@ -1,4 +1,4 @@
-﻿namespace WebIdentityApi.DTOs.Admin.Account
+﻿namespace WebIdentityApi.DTOs.Staff
 {
     public class StaffDto
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebIdentityApi.DTOs.Admin.Account
+namespace WebIdentityApi.DTOs.Staff
 {
     public class CreateStaffDto
     {

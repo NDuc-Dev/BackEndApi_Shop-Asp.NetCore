@@ -11,7 +11,7 @@ namespace WebIdentityApi.Models
         public bool Status { get; set; }
         public string CreateBy { get; set; }
         public User CreatedByUser { get; set; }
-        public DateTime DateTime { get; set; }
+        public DateTime CreateDate { get; set; }
         public int BrandId { get; set; }
         public Brand Brand { get; set; }
         public ICollection<ProductVariant> ProductVariants { get; set; }

@@ -51,21 +51,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "8e96089e-2b50-4f1f-a972-f1b30f80fa09",
+                            Id = "1a056c61-ab69-4691-b396-acac59579b4c",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "3d931b46-74d5-4d61-930c-eed1c1724fa9",
+                            Id = "27ff921b-bc25-4454-97c1-9b8ec2b71d68",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "45ba4a43-1a04-4347-a99d-2a69c8a33bd5",
+                            Id = "98094d86-30e2-484c-81e7-a5b04569cf69",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -205,7 +205,7 @@ namespace WebIdentityApi.Data.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.ToTable("Brand");
+                    b.ToTable("Brands");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Color", b =>
@@ -221,7 +221,7 @@ namespace WebIdentityApi.Data.Migrations
 
                     b.HasKey("ColorId");
 
-                    b.ToTable("Color");
+                    b.ToTable("Colors");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Product", b =>
@@ -238,7 +238,7 @@ namespace WebIdentityApi.Data.Migrations
                     b.Property<string>("CreateBy")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("DateTime")
+                    b.Property<DateTime>("CreateDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
@@ -259,7 +259,7 @@ namespace WebIdentityApi.Data.Migrations
 
                     b.HasIndex("CreateBy");
 
-                    b.ToTable("Product");
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.ProductVariant", b =>
@@ -293,7 +293,7 @@ namespace WebIdentityApi.Data.Migrations
 
                     b.HasIndex("SizeId");
 
-                    b.ToTable("ProductVariant");
+                    b.ToTable("ProductVariants");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Size", b =>
@@ -309,7 +309,7 @@ namespace WebIdentityApi.Data.Migrations
 
                     b.HasKey("SizeId");
 
-                    b.ToTable("Size");
+                    b.ToTable("Sizes");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.User", b =>

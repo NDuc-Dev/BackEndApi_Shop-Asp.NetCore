@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebIdentityApi.DTOs.Account;
-using WebIdentityApi.DTOs.Admin.Account;
+using WebIdentityApi.DTOs.Staff;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
 
@@ -121,7 +121,7 @@ namespace WebIdentityApi.Controllers
                 }
                 return BadRequest("Access denied !");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { title = "Error", message = "An unexpected error occurred. Please try again later." });
             }
@@ -192,6 +192,7 @@ namespace WebIdentityApi.Controllers
 
             // Combine all and shuffle
             string result = upperChar.ToString() + lowerChar + specialChar + numberString;
+            await Task.Delay(10);
             return new string(result.ToCharArray().OrderBy(c => random.Next()).ToArray());
         }
 

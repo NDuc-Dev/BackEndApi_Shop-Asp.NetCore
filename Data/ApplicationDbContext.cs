@@ -12,6 +12,12 @@ namespace WebIdentityApi.Data
 
         }
 
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Brand> Brands { get; set; }
+        public DbSet<Size> Sizes { get; set; }
+        public DbSet<Color> Colors { get; set; }
+        public DbSet<ProductVariant> ProductVariants { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
 
