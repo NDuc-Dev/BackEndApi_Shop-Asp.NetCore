@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebIdentityApi.Models
 {
@@ -9,6 +10,9 @@ namespace WebIdentityApi.Models
         public string ImagePath { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public bool IsActive { get; set; } = false;
+        [Column(TypeName = "decimal(9,0)")]
+        public decimal TotalSpending { get; set; } = 0;
+        public int SpendingPoint { get; set; } = 0;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
 

@@ -8,14 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using WebIdentityApi.DTOs.Account;
 using WebIdentityApi.DTOs.Admin.Account;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebIdentityApi.Controllers
 {
@@ -138,7 +136,7 @@ namespace WebIdentityApi.Controllers
             if (user.EmailConfirmed == false) return BadRequest("Please confirm your email first");
             try
             {
-                if (await SendForgotPasswordOrUserName(user))
+                if (await SendForgotPassword(user))
                 {
                     return Ok(new JsonResult(new { title = "Success", message = "Reset password successfully" }));
                 }
@@ -197,7 +195,7 @@ namespace WebIdentityApi.Controllers
             return new string(result.ToCharArray().OrderBy(c => random.Next()).ToArray());
         }
 
-        private async Task<bool> SendForgotPasswordOrUserName(User user)
+        private async Task<bool> SendForgotPassword(User user)
         {
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
