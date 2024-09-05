@@ -9,7 +9,7 @@ namespace WebIdentityApi.Models
         public string ProductName { get; set; }
         public string Description { get; set; }
         public bool Status { get; set; }
-        public string CreateBy { get; set; }
+        public string CreateByUserId { get; set; }
         public User CreatedByUser { get; set; }
         public DateTime CreateDate { get; set; }
         public int BrandId { get; set; }

@@ -7,10 +7,13 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Account;
+using WebIdentityApi.DTOs.Brand;
 using WebIdentityApi.DTOs.Staff;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
@@ -26,16 +29,21 @@ namespace WebIdentityApi.Controllers
         private readonly UserManager<User> _userManager;
         private readonly EmailService _emailService;
         private IConfiguration _config;
+        private ApplicationDbContext _context;
         public AdminController(UserManager<User> userManager,
             JwtService jwtService,
             EmailService emailService,
-            IConfiguration config)
+            IConfiguration config,
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _jwtService = jwtService;
             _emailService = emailService;
             _config = config;
+            _context = context;
         }
+        #region Staff Manage Function
+
         [HttpPost("create-staff-account")]
         public async Task<ActionResult> createStaff(CreateStaffDto model)
         {
@@ -148,6 +156,60 @@ namespace WebIdentityApi.Controllers
 
             }
         }
+        #endregion
+
+        #region Brand Manage Function
+        [HttpGet("get-brands")]
+        public async Task<ActionResult<IEnumerable<Brand>>> GetAllBrand()
+        {
+            var brands = await _context.Brands.ToListAsync();
+            return Ok(brands);
+        }
+
+        [HttpGet("get-brand/{id}")]
+        public async Task<ActionResult<BrandDto>> GetBrandById(int id)
+        {
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
+            if (brand == null) return NotFound("Brand not found");
+            return Ok(brand);
+        }
+
+        [HttpPost("create-brand")]
+        public async Task<IActionResult> CreateBrand(CreateBrandDto model)
+        {
+            var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
+            if (authorizationHeader == null || !authorizationHeader.StartsWith("Bearer"))
+            {
+                return Unauthorized();
+            }
+            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+            var user = _jwtService.GetUserInfoFromJwt(token);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
+            if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please use another name");
+            try
+            {
+                var brand = new Brand
+                {
+                    BrandName = model.BrandName,
+                    Descriptions = model.Descriptions,
+                    CreatedByUser = user,
+                };
+                _context.Brands.Add(brand);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(
+                nameof(GetBrandById),
+                new { id = brand.BrandId },
+                new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
+                );
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.ToString());
+            }
+        }
+        #endregion
 
         #region Private Helper Method
 

@@ -12,8 +12,8 @@ using WebIdentityApi.Data;
 namespace WebIdentityApi.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240904094915_Seeding-database")]
-    partial class Seedingdatabase
+    [Migration("20240905111202_Seeding-Database")]
+    partial class SeedingDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,21 +54,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "1a056c61-ab69-4691-b396-acac59579b4c",
+                            Id = "114d003e-0c84-4721-acbb-00464a9f7fe3",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "27ff921b-bc25-4454-97c1-9b8ec2b71d68",
+                            Id = "bb6f1ffc-98e9-4aa2-a499-2a548aef5cbf",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "98094d86-30e2-484c-81e7-a5b04569cf69",
+                            Id = "a8251e1c-0e34-47d0-8a8f-318718d91d37",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -192,10 +192,7 @@ namespace WebIdentityApi.Data.Migrations
                     b.Property<string>("BrandName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CreateBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CreatedByUserId")
+                    b.Property<string>("CreateByUserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreatedDate")
@@ -204,9 +201,12 @@ namespace WebIdentityApi.Data.Migrations
                     b.Property<string>("Descriptions")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("BrandId");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreateByUserId");
 
                     b.ToTable("Brands");
                 });
@@ -238,7 +238,7 @@ namespace WebIdentityApi.Data.Migrations
                     b.Property<int>("BrandId")
                         .HasColumnType("int");
 
-                    b.Property<string>("CreateBy")
+                    b.Property<string>("CreateByUserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreateDate")
@@ -256,11 +256,16 @@ namespace WebIdentityApi.Data.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("ProductId");
 
                     b.HasIndex("BrandId");
 
-                    b.HasIndex("CreateBy");
+                    b.HasIndex("CreateByUserId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Products");
                 });
@@ -458,8 +463,8 @@ namespace WebIdentityApi.Data.Migrations
             modelBuilder.Entity("WebIdentityApi.Models.Brand", b =>
                 {
                     b.HasOne("WebIdentityApi.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
+                        .WithMany("CreatedBrands")
+                        .HasForeignKey("CreateByUserId");
 
                     b.Navigation("CreatedByUser");
                 });
@@ -474,7 +479,11 @@ namespace WebIdentityApi.Data.Migrations
 
                     b.HasOne("WebIdentityApi.Models.User", "CreatedByUser")
                         .WithMany()
-                        .HasForeignKey("CreateBy");
+                        .HasForeignKey("CreateByUserId");
+
+                    b.HasOne("WebIdentityApi.Models.User", null)
+                        .WithMany("CreatedProducts")
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Brand");
 
@@ -526,6 +535,13 @@ namespace WebIdentityApi.Data.Migrations
             modelBuilder.Entity("WebIdentityApi.Models.Size", b =>
                 {
                     b.Navigation("ProductVariants");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.User", b =>
+                {
+                    b.Navigation("CreatedBrands");
+
+                    b.Navigation("CreatedProducts");
                 });
 #pragma warning restore 612, 618
         }

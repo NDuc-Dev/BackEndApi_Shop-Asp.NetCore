@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebIdentityApi.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Seedingdatabase : Migration
+    public partial class SeedingDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -199,17 +199,17 @@ namespace WebIdentityApi.Data.Migrations
                     BrandId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BrandName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Descriptions = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreateBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreateByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Brands", x => x.BrandId);
                     table.ForeignKey(
-                        name: "FK_Brands_AspNetUsers_CreatedByUserId",
-                        column: x => x.CreatedByUserId,
+                        name: "FK_Brands_AspNetUsers_CreateByUserId",
+                        column: x => x.CreateByUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                 });
@@ -223,17 +223,23 @@ namespace WebIdentityApi.Data.Migrations
                     ProductName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Status = table.Column<bool>(type: "bit", nullable: false),
-                    CreateBy = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreateByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CreateDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     BrandId = table.Column<int>(type: "int", nullable: false),
-                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.ProductId);
                     table.ForeignKey(
-                        name: "FK_Products_AspNetUsers_CreateBy",
-                        column: x => x.CreateBy,
+                        name: "FK_Products_AspNetUsers_CreateByUserId",
+                        column: x => x.CreateByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Products_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -284,9 +290,9 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "1a056c61-ab69-4691-b396-acac59579b4c", "1", "Admin", "Admin" },
-                    { "27ff921b-bc25-4454-97c1-9b8ec2b71d68", "2", "Staff", "Staff" },
-                    { "98094d86-30e2-484c-81e7-a5b04569cf69", "3", "Customer", "Customer" }
+                    { "114d003e-0c84-4721-acbb-00464a9f7fe3", "1", "Admin", "Admin" },
+                    { "a8251e1c-0e34-47d0-8a8f-318718d91d37", "3", "Customer", "Customer" },
+                    { "bb6f1ffc-98e9-4aa2-a499-2a548aef5cbf", "2", "Staff", "Staff" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -329,9 +335,9 @@ namespace WebIdentityApi.Data.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Brands_CreatedByUserId",
+                name: "IX_Brands_CreateByUserId",
                 table: "Brands",
-                column: "CreatedByUserId");
+                column: "CreateByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_BrandId",
@@ -339,9 +345,14 @@ namespace WebIdentityApi.Data.Migrations
                 column: "BrandId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Products_CreateBy",
+                name: "IX_Products_CreateByUserId",
                 table: "Products",
-                column: "CreateBy");
+                column: "CreateByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_UserId",
+                table: "Products",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductVariants_ColorId",

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebIdentityApi.Models
@@ -15,6 +16,8 @@ namespace WebIdentityApi.Models
         public int SpendingPoint { get; set; } = 0;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
+        public ICollection<Brand> CreatedBrands { get; set; }
+        public ICollection<Product> CreatedProducts { get; set; }
 
     }
 }

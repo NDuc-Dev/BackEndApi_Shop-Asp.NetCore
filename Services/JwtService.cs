@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using WebIdentityApi.Data;
 using WebIdentityApi.Models;
 
 namespace WebIdentityApi.Services
@@ -15,8 +18,10 @@ namespace WebIdentityApi.Services
     {
         private readonly IConfiguration _config;
         private SymmetricSecurityKey _jwtKey;
-        public JwtService(IConfiguration config)
+        private readonly ApplicationDbContext _context;
+        public JwtService(IConfiguration config, ApplicationDbContext context)
         {
+            _context = context;
             _config = config;
             _jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Key"]));
 
@@ -35,6 +40,31 @@ namespace WebIdentityApi.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(jwt);
+        }
+
+        public User GetUserInfoFromJwt(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Key"])),
+                ValidIssuer = _config["JWT:Issuer"],
+                ValidateIssuer = true,
+                ValidateAudience = false
+            };
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var user = _context.Users.FirstOrDefault(u => u.Id == userId);
+                return user;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         #region Private Helper Method

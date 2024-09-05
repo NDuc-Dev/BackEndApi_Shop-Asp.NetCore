@@ -20,7 +20,10 @@ namespace WebIdentityApi.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-
+            builder.Entity<Brand>()
+                .HasOne(b => b.CreatedByUser)
+                .WithMany(u => u.CreatedBrands)
+                .HasForeignKey(b => b.CreateByUserId);
             builder.Entity<Brand>()
                 .HasMany(p => p.Products)
                 .WithOne(pv => pv.Brand)
@@ -40,7 +43,7 @@ namespace WebIdentityApi.Data
             builder.Entity<Product>()
                 .HasOne(p => p.CreatedByUser)
                 .WithMany()
-                .HasForeignKey(p => p.CreateBy);
+                .HasForeignKey(p => p.CreateByUserId);
 
             base.OnModelCreating(builder);
             this.SeedRole(builder);
