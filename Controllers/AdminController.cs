@@ -209,6 +209,12 @@ namespace WebIdentityApi.Controllers
                 return BadRequest(ex.ToString());
             }
         }
+
+        //[HttpPut("update-brand/{id}")]
+        //public async Task<IActionResult> UpdateBrand(int id, Brand brand)
+        //{
+
+        //}
         #endregion
 
         #region Private Helper Method

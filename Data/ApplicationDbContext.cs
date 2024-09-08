@@ -16,7 +16,11 @@ namespace WebIdentityApi.Data
         public DbSet<Brand> Brands { get; set; }
         public DbSet<Size> Sizes { get; set; }
         public DbSet<Color> Colors { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<NameTag> NameTags { get; set; }
         public DbSet<ProductVariant> ProductVariants { get; set; }
+        public DbSet<ProductNameTag> ProductNameTags { get; set; }
+        public DbSet<OrderDetails> OrderDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -28,10 +32,39 @@ namespace WebIdentityApi.Data
                 .HasMany(p => p.Products)
                 .WithOne(pv => pv.Brand)
                 .HasForeignKey(pv => pv.BrandId);
+
             builder.Entity<Product>()
                 .HasMany(p => p.ProductVariants)
                 .WithOne(pv => pv.Product)
                 .HasForeignKey(pv => pv.ProductId);
+            builder.Entity<Product>()
+                .HasOne(p => p.CreatedByUser)
+                .WithMany(u => u.CreatedProducts)
+                .HasForeignKey(p => p.CreateByUserId);
+
+            builder.Entity<Order>()
+                .HasOne(o => o.OrderByUser)
+                .WithMany(u => u.CreatedOrders)
+                .HasForeignKey(o => o.OrderBy);
+
+            builder.Entity<ProductNameTag>()
+                .HasOne(pnt => pnt.Product)
+                .WithMany(p => p.NameTags)
+                .HasForeignKey(pnt => pnt.ProductId);
+            builder.Entity<ProductNameTag>()
+                .HasOne(pnt => pnt.NameTag)
+                .WithMany(p => p.ProductTags)
+                .HasForeignKey(pnt => pnt.NameTagId);
+
+            builder.Entity<OrderDetails>()
+                .HasOne(od => od.Order)
+                .WithMany(o => o.Details)
+                .HasForeignKey(od => od.OrderId);
+            builder.Entity<OrderDetails>()
+                .HasOne(od => od.ProductVariant)
+                .WithMany(p => p.Details)
+                .HasForeignKey(od => od.ProductVariantId);
+
             builder.Entity<Size>()
                 .HasMany(p => p.ProductVariants)
                 .WithOne(pv => pv.Size)
@@ -40,10 +73,6 @@ namespace WebIdentityApi.Data
                 .HasMany(p => p.ProductVariants)
                 .WithOne(pv => pv.Color)
                 .HasForeignKey(pv => pv.ColorId);
-            builder.Entity<Product>()
-                .HasOne(p => p.CreatedByUser)
-                .WithMany()
-                .HasForeignKey(p => p.CreateByUserId);
 
             base.OnModelCreating(builder);
             this.SeedRole(builder);

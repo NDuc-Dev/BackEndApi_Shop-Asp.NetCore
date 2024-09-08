@@ -1,9 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebIdentityApi.Models
 {
     public class ProductVariant
     {
+        [Key]
         public int ProductVariantId { get; set; }
         public int ProductId { get; set; }
         public Product Product { get; set; }
@@ -14,5 +17,7 @@ namespace WebIdentityApi.Models
         [Column(TypeName = "decimal(9,0)")]
         public decimal UnitPrice { get; set; }
         public int Quantity { get; set; }
+        public ICollection<OrderDetails> Details { get; set; }
+
     }
 }

@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebIdentityApi.Models
 {
     public class User : IdentityUser
     {
+        [Required(ErrorMessage ="Full name is require")]
         public string FullName { get; set; }
         public string ImagePath { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
@@ -18,6 +20,7 @@ namespace WebIdentityApi.Models
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
         public ICollection<Brand> CreatedBrands { get; set; }
         public ICollection<Product> CreatedProducts { get; set; }
+        public ICollection<Order> CreatedOrders { get; set; }
 
     }
 }
