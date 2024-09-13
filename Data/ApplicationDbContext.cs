@@ -11,7 +11,6 @@ namespace WebIdentityApi.Data
         {
 
         }
-
         public DbSet<Product> Products { get; set; }
         public DbSet<Brand> Brands { get; set; }
         public DbSet<Size> Sizes { get; set; }
@@ -69,13 +68,15 @@ namespace WebIdentityApi.Data
                 .HasMany(p => p.ProductVariants)
                 .WithOne(pv => pv.Size)
                 .HasForeignKey(pv => pv.SizeId);
+
             builder.Entity<Color>()
                 .HasMany(p => p.ProductVariants)
                 .WithOne(pv => pv.Color)
                 .HasForeignKey(pv => pv.ColorId);
 
             base.OnModelCreating(builder);
-            this.SeedRole(builder);
+            SeedRole(builder);
+            SeedSize(builder);
         }
 
         private void SeedRole(ModelBuilder builder)
@@ -85,6 +86,21 @@ namespace WebIdentityApi.Data
                 new IdentityRole() { Name = "Admin", ConcurrencyStamp = "1", NormalizedName = "Admin" },
                 new IdentityRole() { Name = "Staff", ConcurrencyStamp = "2", NormalizedName = "Staff" },
                 new IdentityRole() { Name = "Customer", ConcurrencyStamp = "3", NormalizedName = "Customer" }
+                );
+        }
+        private void SeedSize(ModelBuilder builder)
+        {
+            builder.Entity<Size>().HasData(
+                new Size() { SizeId = 1, SizeValue = 36 },
+                new Size() { SizeId = 2, SizeValue = 37 },
+                new Size() { SizeId = 3, SizeValue = 38 },
+                new Size() { SizeId = 4, SizeValue = 39 },
+                new Size() { SizeId = 5, SizeValue = 40 },
+                new Size() { SizeId = 6, SizeValue = 41 },
+                new Size() { SizeId = 7, SizeValue = 42 },
+                new Size() { SizeId = 8, SizeValue = 43 },
+                new Size() { SizeId = 9, SizeValue = 44 },
+                new Size() { SizeId = 10, SizeValue = 45 }
                 );
         }
     }

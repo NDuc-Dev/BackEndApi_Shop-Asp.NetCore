@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebIdentityApi.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Seeding_Database : Migration
+    public partial class Sedding_Database : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -92,7 +92,7 @@ namespace WebIdentityApi.Data.Migrations
                 {
                     SizeId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SizeValue = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    SizeValue = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -374,9 +374,26 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "1caf9f64-d2ba-438f-9604-0adf30149424", "2", "Staff", "Staff" },
-                    { "2672e387-4972-4978-b6ab-4a6a599291c4", "3", "Customer", "Customer" },
-                    { "ace3df12-4b3b-4281-9198-c96bdba7d702", "1", "Admin", "Admin" }
+                    { "7df1e989-0e73-46d6-b0b8-518fa264e022", "1", "Admin", "Admin" },
+                    { "bf965f82-0fd1-4735-bfd3-76770852242c", "3", "Customer", "Customer" },
+                    { "e8b7c2f7-9d0d-4f8e-ad67-a21ac872457a", "2", "Staff", "Staff" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Sizes",
+                columns: new[] { "SizeId", "SizeValue" },
+                values: new object[,]
+                {
+                    { 1, 36 },
+                    { 2, 37 },
+                    { 3, 38 },
+                    { 4, 39 },
+                    { 5, 40 },
+                    { 6, 41 },
+                    { 7, 42 },
+                    { 8, 43 },
+                    { 9, 44 },
+                    { 10, 45 }
                 });
 
             migrationBuilder.CreateIndex(

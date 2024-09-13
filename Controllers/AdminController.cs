@@ -7,13 +7,14 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IdentityModel.Tokens.Jwt;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Account;
 using WebIdentityApi.DTOs.Brand;
+using WebIdentityApi.DTOs.Color;
 using WebIdentityApi.DTOs.Staff;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
@@ -178,10 +179,6 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> CreateBrand(CreateBrandDto model)
         {
             var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-            if (authorizationHeader == null || !authorizationHeader.StartsWith("Bearer"))
-            {
-                return Unauthorized();
-            }
             var token = authorizationHeader.Substring("Bearer ".Length).Trim();
             var user = _jwtService.GetUserInfoFromJwt(token);
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -196,7 +193,7 @@ namespace WebIdentityApi.Controllers
                     CreatedByUser = user,
                 };
                 _context.Brands.Add(brand);
-                await _context.SaveChangesAsync();
+                var result = _context.SaveChangesAsync();
                 return CreatedAtAction(
                 nameof(GetBrandById),
                 new { id = brand.BrandId },
@@ -210,11 +207,141 @@ namespace WebIdentityApi.Controllers
             }
         }
 
-        //[HttpPut("update-brand/{id}")]
-        //public async Task<IActionResult> UpdateBrand(int id, Brand brand)
-        //{
+        [HttpPut("update-brand/{id}")]
+        public async Task<IActionResult> UpdateBrand(int id, BrandDto model)
+        {
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
+            if (brand == null) return BadRequest("Brand does not exist, please try again");
+            var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
+            if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please try with another name");
+            try
+            {
+                brand.BrandName = model.BrandName;
+                brand.Descriptions = model.Description;
+                brand.ImagePath = model.ImagePath;
+                _context.Update(brand);
+                return Ok("Brand has been update !");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.ToString());
+            }
+        }
+        #endregion
 
-        //}
+        #region Color Manage Function
+        [HttpGet("get-colors")]
+        public async Task<IActionResult> GetColors()
+        {
+            var color = await _context.Colors.ToListAsync();
+            return Ok(color);
+        }
+
+        [HttpGet("get-color/{id}")]
+        public async Task<IActionResult> GetColorById(int id)
+        {
+            var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == id);
+            if (color == null) return BadRequest("Color not found");
+            return Ok(color);
+        }
+
+        [HttpPost("create-color")]
+        public async Task<IActionResult> CreateColor(ColorDto model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var color = new WebIdentityApi.Models.Color
+            {
+                ColorName = model.ColorName
+            };
+            _context.Colors.Add(color);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetColorById),
+                new { id = color.ColorId },
+                new { title = "Brand Created", message = $"Create {model.ColorName} color successfully!" }
+                );
+        }
+
+        [HttpPut("update-color/{id}")]
+        public async Task<IActionResult> UpdateColor(int id, ColorDto model)
+        {
+            var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == id);
+            if (color == null) return BadRequest("Color does not exist !");
+            var existColor = await _context.Colors.FirstOrDefaultAsync(c => c.ColorName == model.ColorName);
+            if (existColor != null) return BadRequest("Color name has been exist, please try with another name again !");
+            try
+            {
+                color.ColorName = model.ColorName;
+                _context.Update(color);
+                return Ok("Update Color Successfully !");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.ToString());
+            }
+        }
+        #endregion
+
+        #region Name Tag Manage Funtion
+        [HttpGet("get-name-tags")]
+        public async Task<IActionResult> GetNameTags()
+        {
+            var nametag = await _context.NameTags.ToListAsync();
+            return Ok(nametag);
+        }
+
+        [HttpGet("get-name-tag/{id}")]
+        public async Task<IActionResult> GetNameTagById(int id)
+        {
+            var nameTag = await _context.NameTags.FirstOrDefaultAsync(n => n.NameTagId == id);
+            if (nameTag == null) return BadRequest("Name tag does not exist !");
+            return Ok(nameTag);
+        }
+
+        [HttpPost("create-name-tag")]
+        public async Task<IActionResult> CreateNameTag(NameTag model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var existName = await _context.NameTags.FirstOrDefaultAsync(n => n.Tag == model.Tag);
+            if (existName != null) return BadRequest("Name tag has been exist, please try again !");
+            try
+            {
+                var nameTag = new NameTag
+                {
+                    Tag = model.Tag,
+                };
+                _context.NameTags.Add(nameTag);
+                return CreatedAtAction(nameof(GetNameTagById),
+                new { id = nameTag.NameTagId },
+                new { title = "Brand Created", message = $"Create {model.Tag} tag successfully!" }
+                );
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+
+        }
+        #endregion
+
+        #region Size Manage Function
+        [HttpGet("get-sizes")]
+        public async Task<IActionResult> GetSizes()
+        {
+            var sizes = await _context.Sizes.ToListAsync();
+            return Ok(sizes);
+        }
+
+        [HttpGet("get-size/{id}")]
+        public async Task<IActionResult> GetSizeById (int id)
+        {
+            var size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == id);
+            if (size == null) return BadRequest("Size does not exist");
+            return Ok(size);
+        }
+        #endregion
+
+        #region Product Manage Function
         #endregion
 
         #region Private Helper Method
@@ -258,7 +385,6 @@ namespace WebIdentityApi.Controllers
                                                 .Select(s => s[random.Next(s.Length)])
                                                 .ToArray());
 
-            // Combine all and shuffle
             string result = upperChar.ToString() + lowerChar + specialChar + numberString;
             await Task.Delay(10);
             return new string(result.ToCharArray().OrderBy(c => random.Next()).ToArray());

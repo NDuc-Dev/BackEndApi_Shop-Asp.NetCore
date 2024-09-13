@@ -51,21 +51,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ace3df12-4b3b-4281-9198-c96bdba7d702",
+                            Id = "7df1e989-0e73-46d6-b0b8-518fa264e022",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "1caf9f64-d2ba-438f-9604-0adf30149424",
+                            Id = "e8b7c2f7-9d0d-4f8e-ad67-a21ac872457a",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "2672e387-4972-4978-b6ab-4a6a599291c4",
+                            Id = "bf965f82-0fd1-4735-bfd3-76770852242c",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -411,13 +411,64 @@ namespace WebIdentityApi.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SizeId"));
 
-                    b.Property<string>("SizeValue")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("SizeValue")
+                        .HasColumnType("int");
 
                     b.HasKey("SizeId");
 
                     b.ToTable("Sizes");
+
+                    b.HasData(
+                        new
+                        {
+                            SizeId = 1,
+                            SizeValue = 36
+                        },
+                        new
+                        {
+                            SizeId = 2,
+                            SizeValue = 37
+                        },
+                        new
+                        {
+                            SizeId = 3,
+                            SizeValue = 38
+                        },
+                        new
+                        {
+                            SizeId = 4,
+                            SizeValue = 39
+                        },
+                        new
+                        {
+                            SizeId = 5,
+                            SizeValue = 40
+                        },
+                        new
+                        {
+                            SizeId = 6,
+                            SizeValue = 41
+                        },
+                        new
+                        {
+                            SizeId = 7,
+                            SizeValue = 42
+                        },
+                        new
+                        {
+                            SizeId = 8,
+                            SizeValue = 43
+                        },
+                        new
+                        {
+                            SizeId = 9,
+                            SizeValue = 44
+                        },
+                        new
+                        {
+                            SizeId = 10,
+                            SizeValue = 45
+                        });
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.User", b =>
