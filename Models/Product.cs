@@ -12,7 +12,7 @@ namespace WebIdentityApi.Models
         public string ProductName { get; set; }
         [Required(ErrorMessage = "Product descriptions is required")]
         public string Description { get; set; }
-        public bool Status { get; set; }
+        public bool Status { get; set; } = false;
         public string CreateByUserId { get; set; }
         public User CreatedByUser { get; set; }
         public DateTime CreateDate { get; set; }

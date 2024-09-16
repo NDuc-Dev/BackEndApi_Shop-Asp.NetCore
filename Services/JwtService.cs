@@ -42,7 +42,7 @@ namespace WebIdentityApi.Services
             return tokenHandler.WriteToken(jwt);
         }
 
-        public User GetUserInfoFromJwt(string token)
+        public async Task<User> GetUserInfoFromJwt(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenValidationParameters = new TokenValidationParameters

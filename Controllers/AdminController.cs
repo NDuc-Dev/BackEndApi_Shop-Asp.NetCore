@@ -7,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +14,7 @@ using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Account;
 using WebIdentityApi.DTOs.Brand;
 using WebIdentityApi.DTOs.Color;
+using WebIdentityApi.DTOs.Product;
 using WebIdentityApi.DTOs.Staff;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
@@ -31,7 +31,8 @@ namespace WebIdentityApi.Controllers
         private readonly EmailService _emailService;
         private IConfiguration _config;
         private ApplicationDbContext _context;
-        public AdminController(UserManager<User> userManager,
+        public AdminController(
+            UserManager<User> userManager,
             JwtService jwtService,
             EmailService emailService,
             IConfiguration config,
@@ -180,7 +181,8 @@ namespace WebIdentityApi.Controllers
         {
             var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
             var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-            var user = _jwtService.GetUserInfoFromJwt(token);
+            var user = await _jwtService.GetUserInfoFromJwt(token);
+            if (user == null) return BadRequest("User not found!");
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
             if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please use another name");
@@ -249,7 +251,7 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> CreateColor(ColorDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var color = new WebIdentityApi.Models.Color
+            var color = new Color
             {
                 ColorName = model.ColorName
             };
@@ -257,7 +259,7 @@ namespace WebIdentityApi.Controllers
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetColorById),
                 new { id = color.ColorId },
-                new { title = "Brand Created", message = $"Create {model.ColorName} color successfully!" }
+                new { title = "Color Created", message = $"Create {model.ColorName} color successfully!" }
                 );
         }
 
@@ -333,7 +335,7 @@ namespace WebIdentityApi.Controllers
         }
 
         [HttpGet("get-size/{id}")]
-        public async Task<IActionResult> GetSizeById (int id)
+        public async Task<IActionResult> GetSizeById(int id)
         {
             var size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == id);
             if (size == null) return BadRequest("Size does not exist");
@@ -342,6 +344,52 @@ namespace WebIdentityApi.Controllers
         #endregion
 
         #region Product Manage Function
+        [HttpGet("get-products")]
+        public async Task<IActionResult> GetProducts()
+        {
+            return Ok(await _context.Products.ToListAsync());
+        }
+
+        [HttpGet("get-product/{id}")]
+        public async Task<IActionResult> GetProductById(int id)
+        {
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
+            if (product == null) return BadRequest("Product does not exist !");
+            return Ok(product);
+        }
+
+        [HttpPost("create-product")]
+        public async Task<IActionResult> CreateProduct(CreateProductDto model)
+        {
+            var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
+            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+            var user = await _jwtService.GetUserInfoFromJwt(token);
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
+            var product = new Product
+            {
+                ProductName = model.ProductName,
+                Description = model.ProductDescription,
+                Brand = brand,
+                CreatedByUser = user,
+            };
+            _context.Products.Add(product);
+            foreach (var variantDto in model.Variants)
+            {
+                var size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == variantDto.SizeId);
+                var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variantDto.ColorId);
+                var productVariant = new ProductVariant
+                {
+                    Color = color,
+                    Size = size,
+                    UnitPrice = variantDto.UnitPrice,
+                    Quantity = variantDto.Quantity,
+                    Product = product
+                };
+                _context.ProductVariants.Add(productVariant);
+            }
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
+        }
         #endregion
 
         #region Private Helper Method
@@ -412,6 +460,7 @@ namespace WebIdentityApi.Controllers
 
             return isStaff;
         }
+
         #endregion
     }
 }

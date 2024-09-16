@@ -9,11 +9,11 @@ using WebIdentityApi.Data;
 
 #nullable disable
 
-namespace WebIdentityApi.Data.Migrations
+namespace WebIdentityApi.Data.Migratons
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240913061431_Sedding_Database")]
-    partial class Sedding_Database
+    [Migration("20240916092811_Seeding_Database")]
+    partial class Seeding_Database
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,21 +54,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "7df1e989-0e73-46d6-b0b8-518fa264e022",
+                            Id = "e916b8b9-a08d-4e90-ae0e-c665b3a85f1e",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "e8b7c2f7-9d0d-4f8e-ad67-a21ac872457a",
+                            Id = "bc5720ec-64bf-4825-9739-29c9d67177cd",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "bf965f82-0fd1-4735-bfd3-76770852242c",
+                            Id = "ad032217-c373-4e9b-beba-5e20290c784a",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
