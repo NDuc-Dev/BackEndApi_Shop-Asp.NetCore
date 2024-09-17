@@ -15,10 +15,10 @@ namespace WebIdentityApi.Models
         public bool Status { get; set; } = false;
         public string CreateByUserId { get; set; }
         public User CreatedByUser { get; set; }
-        public DateTime CreateDate { get; set; }
+        public DateTime CreateDate { get; set; } = DateTime.Now;
         public int BrandId { get; set; }
         public Brand Brand { get; set; }
-        public ICollection<ProductNameTag> NameTags { get; set; }
+        public ICollection<ProductNameTag> NameTags { get; set; } = null;
         public ICollection<ProductVariant> ProductVariants { get; set; }
         public string ImagePath { get; set; }
     }

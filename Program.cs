@@ -12,6 +12,7 @@ using System.Text;
 using WebIdentityApi.Data;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
+using System.Text.Json.Serialization;
 
 namespace WebIdentityApi
 {
@@ -24,6 +25,10 @@ namespace WebIdentityApi
             // Add services to the container.
 
             object value = builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

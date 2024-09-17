@@ -19,8 +19,8 @@ namespace WebIdentityApi.Models
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
         public ICollection<Brand> CreatedBrands { get; set; }
-        public ICollection<Product> CreatedProducts { get; set; }
-        public ICollection<Order> CreatedOrders { get; set; }
+        public ICollection<Product> CreatedProducts { get; set; } = null;
+        public ICollection<Order> CreatedOrders { get; set; } = null;
 
     }
 }

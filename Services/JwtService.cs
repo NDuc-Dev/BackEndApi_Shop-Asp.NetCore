@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using WebIdentityApi.Data;
 using WebIdentityApi.Models;
@@ -59,9 +60,10 @@ namespace WebIdentityApi.Services
                 var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
                 var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var user = _context.Users.FirstOrDefault(u => u.Id == userId);
+                await Task.Delay(10);
                 return user;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }
