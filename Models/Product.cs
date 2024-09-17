@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace WebIdentityApi.Models
 {
@@ -14,6 +15,7 @@ namespace WebIdentityApi.Models
         public string Description { get; set; }
         public bool Status { get; set; } = false;
         public string CreateByUserId { get; set; }
+        [JsonIgnore]
         public User CreatedByUser { get; set; }
         public DateTime CreateDate { get; set; } = DateTime.Now;
         public int BrandId { get; set; }

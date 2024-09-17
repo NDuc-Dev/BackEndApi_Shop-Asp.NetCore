@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace WebIdentityApi.Models
 {
@@ -14,6 +15,7 @@ namespace WebIdentityApi.Models
         [Required(ErrorMessage = "Descriotions is required")]
         public string Descriptions { get; set; }
         public string CreateByUserId { get; set; }
+        [JsonIgnore]
         public User CreatedByUser { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public ICollection<Product> Products { get; set; }

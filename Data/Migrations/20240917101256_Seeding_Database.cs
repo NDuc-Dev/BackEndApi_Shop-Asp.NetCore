@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace WebIdentityApi.Data.Migratons
+namespace WebIdentityApi.Migrations
 {
     /// <inheritdoc />
     public partial class Seeding_Database : Migration
@@ -315,7 +315,8 @@ namespace WebIdentityApi.Data.Migratons
                     SizeId = table.Column<int>(type: "int", nullable: false),
                     ColorId = table.Column<int>(type: "int", nullable: false),
                     UnitPrice = table.Column<decimal>(type: "decimal(9,0)", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false)
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -374,9 +375,9 @@ namespace WebIdentityApi.Data.Migratons
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "ad032217-c373-4e9b-beba-5e20290c784a", "3", "Customer", "Customer" },
-                    { "bc5720ec-64bf-4825-9739-29c9d67177cd", "2", "Staff", "Staff" },
-                    { "e916b8b9-a08d-4e90-ae0e-c665b3a85f1e", "1", "Admin", "Admin" }
+                    { "94e5d958-7d4c-44c6-b44c-d94f0aa3a292", "1", "Admin", "Admin" },
+                    { "b564ff44-f88f-4e5c-a902-fd97a4c8bb67", "2", "Staff", "Staff" },
+                    { "ccac15be-9394-4ea5-9aca-b0bac68d93c0", "3", "Customer", "Customer" }
                 });
 
             migrationBuilder.InsertData(

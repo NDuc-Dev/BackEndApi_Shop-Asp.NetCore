@@ -7,11 +7,14 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Account;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using WebIdentityApi.DTOs.Brand;
 using WebIdentityApi.DTOs.Color;
 using WebIdentityApi.DTOs.Product;
@@ -177,8 +180,24 @@ namespace WebIdentityApi.Controllers
         }
 
         [HttpPost("create-brand")]
-        public async Task<IActionResult> CreateBrand(CreateBrandDto model)
+        public async Task<IActionResult> CreateBrand([FromForm] CreateBrandDto model)
         {
+            string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
+            string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
+
+            using (var image = Image.Load(model.Image.OpenReadStream()))
+            {
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new SixLabors.ImageSharp.Size(500, 500),
+                    Mode = ResizeMode.Max
+                }));
+                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                }
+                await image.SaveAsJpegAsync(filePath);
+            }
             var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
             var token = authorizationHeader.Substring("Bearer ".Length).Trim();
             var user = await _jwtService.GetUserInfoFromJwt(token);
@@ -193,6 +212,7 @@ namespace WebIdentityApi.Controllers
                     BrandName = model.BrandName,
                     Descriptions = model.Descriptions,
                     CreatedByUser = user,
+                    ImagePath = uniqueFileName
                 };
                 _context.Brands.Add(brand);
                 var result = _context.SaveChangesAsync();
@@ -251,7 +271,7 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> CreateColor(ColorDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var color = new Color
+            var color = new Models.Color
             {
                 ColorName = model.ColorName
             };

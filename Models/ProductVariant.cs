@@ -17,6 +17,7 @@ namespace WebIdentityApi.Models
         [Column(TypeName = "decimal(9,0)")]
         public decimal UnitPrice { get; set; }
         public int Quantity { get; set; }
+        public string ImagePath { get; set; }
         public ICollection<OrderDetails> Details { get; set; }
 
     }

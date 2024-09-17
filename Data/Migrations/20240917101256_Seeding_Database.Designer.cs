@@ -9,10 +9,10 @@ using WebIdentityApi.Data;
 
 #nullable disable
 
-namespace WebIdentityApi.Data.Migratons
+namespace WebIdentityApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240916092811_Seeding_Database")]
+    [Migration("20240917101256_Seeding_Database")]
     partial class Seeding_Database
     {
         /// <inheritdoc />
@@ -54,21 +54,21 @@ namespace WebIdentityApi.Data.Migratons
                     b.HasData(
                         new
                         {
-                            Id = "e916b8b9-a08d-4e90-ae0e-c665b3a85f1e",
+                            Id = "94e5d958-7d4c-44c6-b44c-d94f0aa3a292",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "bc5720ec-64bf-4825-9739-29c9d67177cd",
+                            Id = "b564ff44-f88f-4e5c-a902-fd97a4c8bb67",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "ad032217-c373-4e9b-beba-5e20290c784a",
+                            Id = "ccac15be-9394-4ea5-9aca-b0bac68d93c0",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -382,6 +382,9 @@ namespace WebIdentityApi.Data.Migratons
 
                     b.Property<int>("ColorId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
