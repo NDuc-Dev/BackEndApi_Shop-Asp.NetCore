@@ -182,55 +182,59 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-brand")]
         public async Task<IActionResult> CreateBrand([FromForm] CreateBrandDto model)
         {
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
-            string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
-
-            using (var image = Image.Load(model.Image.OpenReadStream()))
+            if (!ModelState.IsValid)
             {
-                image.Mutate(x => x.Resize(new ResizeOptions
+                return BadRequest(ModelState);
+            }
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
                 {
-                    Size = new SixLabors.ImageSharp.Size(500, 500),
-                    Mode = ResizeMode.Max
-                }));
-                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                    var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
+                    if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
+                    string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
+                    var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
+                    var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+                    var user = await _jwtService.GetUserInfoFromJwt(token);
+                    if (user == null) return BadRequest("User not found!");
+                    var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
+                    if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
+                    using (var image = Image.Load(model.Image.OpenReadStream()))
+                    {
+                        //if (image.Width != 500 || image.Height != 500) return BadRequest("Invalid image size. Image must be 500x500 pixels.");
+                        if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                        }
+                        await image.SaveAsJpegAsync(filePath);
+                    }
+                    var brand = new Brand
+                    {
+                        BrandName = model.BrandName,
+                        Descriptions = model.Descriptions,
+                        CreatedByUser = user,
+                        ImagePath = uniqueFileName
+                    };
+                    _context.Brands.Add(brand);
+                    var result = _context.SaveChangesAsync();
+                    transaction.Commit();
+                    return CreatedAtAction(
+                    nameof(GetBrandById),
+                    new { id = brand.BrandId },
+                    new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
+                    );
                 }
-                await image.SaveAsJpegAsync(filePath);
-            }
-            var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-            var user = await _jwtService.GetUserInfoFromJwt(token);
-            if (user == null) return BadRequest("User not found!");
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
-            if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please use another name");
-            try
-            {
-                var brand = new Brand
+                catch (Exception ex)
                 {
-                    BrandName = model.BrandName,
-                    Descriptions = model.Descriptions,
-                    CreatedByUser = user,
-                    ImagePath = uniqueFileName
-                };
-                _context.Brands.Add(brand);
-                var result = _context.SaveChangesAsync();
-                return CreatedAtAction(
-                nameof(GetBrandById),
-                new { id = brand.BrandId },
-                new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
-                );
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.ToString());
+                    transaction.Rollback();
+                    return BadRequest(ex.ToString());
+                }
             }
         }
 
         [HttpPut("update-brand/{id}")]
-        public async Task<IActionResult> UpdateBrand(int id, BrandDto model)
+        public async Task<IActionResult> UpdateBrand(int id, [FromForm] BrandDto model)
         {
             var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
             if (brand == null) return BadRequest("Brand does not exist, please try again");
@@ -378,38 +382,38 @@ namespace WebIdentityApi.Controllers
             return Ok(product);
         }
 
-        [HttpPost("create-product")]
-        public async Task<IActionResult> CreateProduct(CreateProductDto model)
-        {
-            var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-            var user = await _jwtService.GetUserInfoFromJwt(token);
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
-            var product = new Product
-            {
-                ProductName = model.ProductName,
-                Description = model.ProductDescription,
-                Brand = brand,
-                CreatedByUser = user,
-            };
-            _context.Products.Add(product);
-            foreach (var variantDto in model.Variants)
-            {
-                var size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == variantDto.SizeId);
-                var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variantDto.ColorId);
-                var productVariant = new ProductVariant
-                {
-                    Color = color,
-                    Size = size,
-                    UnitPrice = variantDto.UnitPrice,
-                    Quantity = variantDto.Quantity,
-                    Product = product
-                };
-                _context.ProductVariants.Add(productVariant);
-            }
-            await _context.SaveChangesAsync();
-            return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
-        }
+        //[HttpPost("create-product")]
+        //public async Task<IActionResult> CreateProduct(CreateProductDto model)
+        //{
+        //    var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
+        //    var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+        //    var user = await _jwtService.GetUserInfoFromJwt(token);
+        //    var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
+        //    var product = new Product
+        //    {
+        //        ProductName = model.ProductName,
+        //        Description = model.ProductDescription,
+        //        Brand = brand,
+        //        CreatedByUser = user,
+        //    };
+        //    _context.Products.Add(product);
+        //    foreach (var variantDto in model.Variants)
+        //    {
+        //        var size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == variantDto.SizeId);
+        //        var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variantDto.ColorId);
+        //        var productVariant = new ProductVariant
+        //        {
+        //            Color = color,
+        //            Size = size,
+        //            UnitPrice = variantDto.UnitPrice,
+        //            Quantity = variantDto.Quantity,
+        //            Product = product
+        //        };
+        //        _context.ProductVariants.Add(productVariant);
+        //    }
+        //    await _context.SaveChangesAsync();
+        //    return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
+        //}
         #endregion
 
         #region Private Helper Method

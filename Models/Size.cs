@@ -9,6 +9,6 @@ namespace WebIdentityApi.Models
         public int SizeId { get; set; }
         [Required(ErrorMessage = "Size value is required")]
         public int SizeValue { get; set; }
-        public ICollection<ProductVariant> ProductVariants { get; set; }
+        public ICollection<ProductColorSize> ProductColorSize { get; set; }
     }
 }

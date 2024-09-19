@@ -9,7 +9,7 @@ namespace WebIdentityApi.Models
         public int ColorId { get; set; }
         [Required(ErrorMessage = "Color name is required")]
         public string ColorName { get; set; }
-        public ICollection<ProductVariant> ProductVariants { get; set; }
+        public ICollection<ProductColor> ProductColor { get; set; }
 
     }
 }

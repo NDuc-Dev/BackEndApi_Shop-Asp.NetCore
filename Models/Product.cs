@@ -21,7 +21,7 @@ namespace WebIdentityApi.Models
         public int BrandId { get; set; }
         public Brand Brand { get; set; }
         public ICollection<ProductNameTag> NameTags { get; set; } = null;
-        public ICollection<ProductVariant> ProductVariants { get; set; }
+        public ICollection<ProductColor> ProductColor { get; set; }
         public string ImagePath { get; set; }
     }
 }

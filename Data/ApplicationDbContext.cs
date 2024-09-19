@@ -17,9 +17,10 @@ namespace WebIdentityApi.Data
         public DbSet<Color> Colors { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<NameTag> NameTags { get; set; }
-        public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<ProductNameTag> ProductNameTags { get; set; }
         public DbSet<OrderDetails> OrderDetails { get; set; }
+        public DbSet<ProductColor> ProductColors { get; set; }
+        public DbSet<ProductColorSize> ProductColorsSizes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -33,7 +34,7 @@ namespace WebIdentityApi.Data
                 .HasForeignKey(pv => pv.BrandId);
 
             builder.Entity<Product>()
-                .HasMany(p => p.ProductVariants)
+                .HasMany(p => p.ProductColor)
                 .WithOne(pv => pv.Product)
                 .HasForeignKey(pv => pv.ProductId);
             builder.Entity<Product>()
@@ -60,19 +61,26 @@ namespace WebIdentityApi.Data
                 .WithMany(o => o.Details)
                 .HasForeignKey(od => od.OrderId);
             builder.Entity<OrderDetails>()
-                .HasOne(od => od.ProductVariant)
+                .HasOne(od => od.ProductColorSize)
                 .WithMany(p => p.Details)
-                .HasForeignKey(od => od.ProductVariantId);
+                .HasForeignKey(od => od.ProductColorSizeId);
 
             builder.Entity<Size>()
-                .HasMany(p => p.ProductVariants)
+                .HasMany(p => p.ProductColorSize)
                 .WithOne(pv => pv.Size)
                 .HasForeignKey(pv => pv.SizeId);
 
             builder.Entity<Color>()
-                .HasMany(p => p.ProductVariants)
-                .WithOne(pv => pv.Color)
+                .HasMany(p => p.ProductColor)
+                .WithOne(c => c.Color)
                 .HasForeignKey(pv => pv.ColorId);
+
+            builder.Entity<ProductColor>()
+                .HasMany(pcs => pcs.ProductColorSizes)
+                .WithOne(pc => pc.ProductColor )
+                .HasForeignKey(pcs => pcs.ProductColorSizeId);
+
+
 
             base.OnModelCreating(builder);
             SeedRole(builder);
