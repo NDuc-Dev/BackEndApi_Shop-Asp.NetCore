@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebIdentityApi.Data;
 
 #nullable disable
 
-namespace WebIdentityApi.Migrations
+namespace WebIdentityApi.Data.Mirations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240920085213_Sedding-Database")]
+    partial class SeddingDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,21 +54,21 @@ namespace WebIdentityApi.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "94e5d958-7d4c-44c6-b44c-d94f0aa3a292",
+                            Id = "275dd432-1947-4d7c-9866-3e442c2dc1ef",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "b564ff44-f88f-4e5c-a902-fd97a4c8bb67",
+                            Id = "379dbcce-ecb7-4410-b1e6-495aa59ed7b4",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "ccac15be-9394-4ea5-9aca-b0bac68d93c0",
+                            Id = "228d5833-31bb-468d-8783-6527c5d1d664",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -285,7 +288,7 @@ namespace WebIdentityApi.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductVariantId")
+                    b.Property<int>("ProductColorSizeId")
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity")
@@ -301,7 +304,7 @@ namespace WebIdentityApi.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.HasIndex("ProductVariantId");
+                    b.HasIndex("ProductColorSizeId");
 
                     b.ToTable("OrderDetails");
                 });
@@ -346,6 +349,56 @@ namespace WebIdentityApi.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("WebIdentityApi.Models.ProductColor", b =>
+                {
+                    b.Property<int>("ProductColorId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductColorId"));
+
+                    b.Property<int>("ColorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(9,0)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductColorId");
+
+                    b.HasIndex("ColorId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductColors");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.ProductColorSize", b =>
+                {
+                    b.Property<int>("ProductColorSizeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductColorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SizeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductColorSizeId");
+
+                    b.HasIndex("SizeId");
+
+                    b.ToTable("ProductColorsSizes");
+                });
+
             modelBuilder.Entity("WebIdentityApi.Models.ProductNameTag", b =>
                 {
                     b.Property<int>("Id")
@@ -367,43 +420,6 @@ namespace WebIdentityApi.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductNameTags");
-                });
-
-            modelBuilder.Entity("WebIdentityApi.Models.ProductVariant", b =>
-                {
-                    b.Property<int>("ProductVariantId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductVariantId"));
-
-                    b.Property<int>("ColorId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ImagePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SizeId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(9,0)");
-
-                    b.HasKey("ProductVariantId");
-
-                    b.HasIndex("ColorId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("SizeId");
-
-                    b.ToTable("ProductVariants");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Size", b =>
@@ -641,15 +657,15 @@ namespace WebIdentityApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebIdentityApi.Models.ProductVariant", "ProductVariant")
+                    b.HasOne("WebIdentityApi.Models.ProductColorSize", "ProductColorSize")
                         .WithMany("Details")
-                        .HasForeignKey("ProductVariantId")
+                        .HasForeignKey("ProductColorSizeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Order");
 
-                    b.Navigation("ProductVariant");
+                    b.Navigation("ProductColorSize");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Product", b =>
@@ -667,6 +683,44 @@ namespace WebIdentityApi.Migrations
                     b.Navigation("Brand");
 
                     b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.ProductColor", b =>
+                {
+                    b.HasOne("WebIdentityApi.Models.Color", "Color")
+                        .WithMany("ProductColor")
+                        .HasForeignKey("ColorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebIdentityApi.Models.Product", "Product")
+                        .WithMany("ProductColor")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Color");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.ProductColorSize", b =>
+                {
+                    b.HasOne("WebIdentityApi.Models.ProductColor", "ProductColor")
+                        .WithMany("ProductColorSizes")
+                        .HasForeignKey("ProductColorSizeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebIdentityApi.Models.Size", "Size")
+                        .WithMany("ProductColorSize")
+                        .HasForeignKey("SizeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductColor");
+
+                    b.Navigation("Size");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.ProductNameTag", b =>
@@ -688,33 +742,6 @@ namespace WebIdentityApi.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("WebIdentityApi.Models.ProductVariant", b =>
-                {
-                    b.HasOne("WebIdentityApi.Models.Color", "Color")
-                        .WithMany("ProductVariants")
-                        .HasForeignKey("ColorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WebIdentityApi.Models.Product", "Product")
-                        .WithMany("ProductVariants")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WebIdentityApi.Models.Size", "Size")
-                        .WithMany("ProductVariants")
-                        .HasForeignKey("SizeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Color");
-
-                    b.Navigation("Product");
-
-                    b.Navigation("Size");
-                });
-
             modelBuilder.Entity("WebIdentityApi.Models.Brand", b =>
                 {
                     b.Navigation("Products");
@@ -722,7 +749,7 @@ namespace WebIdentityApi.Migrations
 
             modelBuilder.Entity("WebIdentityApi.Models.Color", b =>
                 {
-                    b.Navigation("ProductVariants");
+                    b.Navigation("ProductColor");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.NameTag", b =>
@@ -739,17 +766,22 @@ namespace WebIdentityApi.Migrations
                 {
                     b.Navigation("NameTags");
 
-                    b.Navigation("ProductVariants");
+                    b.Navigation("ProductColor");
                 });
 
-            modelBuilder.Entity("WebIdentityApi.Models.ProductVariant", b =>
+            modelBuilder.Entity("WebIdentityApi.Models.ProductColor", b =>
+                {
+                    b.Navigation("ProductColorSizes");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.ProductColorSize", b =>
                 {
                     b.Navigation("Details");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Size", b =>
                 {
-                    b.Navigation("ProductVariants");
+                    b.Navigation("ProductColorSize");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.User", b =>

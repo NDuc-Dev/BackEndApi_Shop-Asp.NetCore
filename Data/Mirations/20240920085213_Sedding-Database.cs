@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace WebIdentityApi.Migrations
+namespace WebIdentityApi.Data.Mirations
 {
     /// <inheritdoc />
-    public partial class Seeding_Database : Migration
+    public partial class SeddingDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -280,6 +280,34 @@ namespace WebIdentityApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ProductColors",
+                columns: table => new
+                {
+                    ProductColorId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    ColorId = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(9,0)", nullable: false),
+                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductColors", x => x.ProductColorId);
+                    table.ForeignKey(
+                        name: "FK_ProductColors_Colors_ColorId",
+                        column: x => x.ColorId,
+                        principalTable: "Colors",
+                        principalColumn: "ColorId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProductColors_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ProductNameTags",
                 columns: table => new
                 {
@@ -306,35 +334,25 @@ namespace WebIdentityApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductVariants",
+                name: "ProductColorsSizes",
                 columns: table => new
                 {
-                    ProductVariantId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    ProductColorSizeId = table.Column<int>(type: "int", nullable: false),
+                    ProductColorId = table.Column<int>(type: "int", nullable: false),
                     SizeId = table.Column<int>(type: "int", nullable: false),
-                    ColorId = table.Column<int>(type: "int", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "decimal(9,0)", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Quantity = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductVariants", x => x.ProductVariantId);
+                    table.PrimaryKey("PK_ProductColorsSizes", x => x.ProductColorSizeId);
                     table.ForeignKey(
-                        name: "FK_ProductVariants_Colors_ColorId",
-                        column: x => x.ColorId,
-                        principalTable: "Colors",
-                        principalColumn: "ColorId",
+                        name: "FK_ProductColorsSizes_ProductColors_ProductColorSizeId",
+                        column: x => x.ProductColorSizeId,
+                        principalTable: "ProductColors",
+                        principalColumn: "ProductColorId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ProductVariants_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductVariants_Sizes_SizeId",
+                        name: "FK_ProductColorsSizes_Sizes_SizeId",
                         column: x => x.SizeId,
                         principalTable: "Sizes",
                         principalColumn: "SizeId",
@@ -348,7 +366,7 @@ namespace WebIdentityApi.Migrations
                     DetailsId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderId = table.Column<int>(type: "int", nullable: false),
-                    ProductVariantId = table.Column<int>(type: "int", nullable: false),
+                    ProductColorSizeId = table.Column<int>(type: "int", nullable: false),
                     UnitPrice = table.Column<decimal>(type: "decimal(9,0)", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(9,0)", nullable: false)
@@ -363,10 +381,10 @@ namespace WebIdentityApi.Migrations
                         principalColumn: "OrderId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrderDetails_ProductVariants_ProductVariantId",
-                        column: x => x.ProductVariantId,
-                        principalTable: "ProductVariants",
-                        principalColumn: "ProductVariantId",
+                        name: "FK_OrderDetails_ProductColorsSizes_ProductColorSizeId",
+                        column: x => x.ProductColorSizeId,
+                        principalTable: "ProductColorsSizes",
+                        principalColumn: "ProductColorSizeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -375,9 +393,9 @@ namespace WebIdentityApi.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "94e5d958-7d4c-44c6-b44c-d94f0aa3a292", "1", "Admin", "Admin" },
-                    { "b564ff44-f88f-4e5c-a902-fd97a4c8bb67", "2", "Staff", "Staff" },
-                    { "ccac15be-9394-4ea5-9aca-b0bac68d93c0", "3", "Customer", "Customer" }
+                    { "228d5833-31bb-468d-8783-6527c5d1d664", "3", "Customer", "Customer" },
+                    { "275dd432-1947-4d7c-9866-3e442c2dc1ef", "1", "Admin", "Admin" },
+                    { "379dbcce-ecb7-4410-b1e6-495aa59ed7b4", "2", "Staff", "Staff" }
                 });
 
             migrationBuilder.InsertData(
@@ -447,14 +465,29 @@ namespace WebIdentityApi.Migrations
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderDetails_ProductVariantId",
+                name: "IX_OrderDetails_ProductColorSizeId",
                 table: "OrderDetails",
-                column: "ProductVariantId");
+                column: "ProductColorSizeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_OrderBy",
                 table: "Orders",
                 column: "OrderBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductColors_ColorId",
+                table: "ProductColors",
+                column: "ColorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductColors_ProductId",
+                table: "ProductColors",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductColorsSizes_SizeId",
+                table: "ProductColorsSizes",
+                column: "SizeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductNameTags_NameTagId",
@@ -475,21 +508,6 @@ namespace WebIdentityApi.Migrations
                 name: "IX_Products_CreateByUserId",
                 table: "Products",
                 column: "CreateByUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductVariants_ColorId",
-                table: "ProductVariants",
-                column: "ColorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductVariants_ProductId",
-                table: "ProductVariants",
-                column: "ProductId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductVariants_SizeId",
-                table: "ProductVariants",
-                column: "SizeId");
         }
 
         /// <inheritdoc />
@@ -523,19 +541,22 @@ namespace WebIdentityApi.Migrations
                 name: "Orders");
 
             migrationBuilder.DropTable(
-                name: "ProductVariants");
+                name: "ProductColorsSizes");
 
             migrationBuilder.DropTable(
                 name: "NameTags");
+
+            migrationBuilder.DropTable(
+                name: "ProductColors");
+
+            migrationBuilder.DropTable(
+                name: "Sizes");
 
             migrationBuilder.DropTable(
                 name: "Colors");
 
             migrationBuilder.DropTable(
                 name: "Products");
-
-            migrationBuilder.DropTable(
-                name: "Sizes");
 
             migrationBuilder.DropTable(
                 name: "Brands");
