@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace WebIdentityApi.Data.Mirations
+namespace WebIdentityApi.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class SeddingDatabase : Migration
+    public partial class Seeding_Database : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -393,9 +393,9 @@ namespace WebIdentityApi.Data.Mirations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "228d5833-31bb-468d-8783-6527c5d1d664", "3", "Customer", "Customer" },
-                    { "275dd432-1947-4d7c-9866-3e442c2dc1ef", "1", "Admin", "Admin" },
-                    { "379dbcce-ecb7-4410-b1e6-495aa59ed7b4", "2", "Staff", "Staff" }
+                    { "341b4c77-197f-45e0-87dc-d6345c8b9ea0", "1", "Admin", "Admin" },
+                    { "3a7a5a3f-d8f9-4cdf-8dd2-935960983bd0", "3", "Customer", "Customer" },
+                    { "69c008ed-1859-42bf-bb8e-2fae577436a6", "2", "Staff", "Staff" }
                 });
 
             migrationBuilder.InsertData(
