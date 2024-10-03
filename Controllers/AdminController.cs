@@ -186,70 +186,91 @@ namespace WebIdentityApi.Controllers
             {
                 return BadRequest(ModelState);
             }
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                try
+                var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
+                if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
+                string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
+                var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
+                var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+                var user = await _jwtService.GetUserInfoFromJwt(token);
+                if (user == null) return BadRequest("User not found!");
+                var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
+                if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
+                using (var image = Image.Load(model.Image.OpenReadStream()))
                 {
-                    var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
-                    if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
-                    string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
-                    var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-                    var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-                    var user = await _jwtService.GetUserInfoFromJwt(token);
-                    if (user == null) return BadRequest("User not found!");
-                    var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
-                    if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
-                    using (var image = Image.Load(model.Image.OpenReadStream()))
+                    if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                     {
-                        //if (image.Width != 500 || image.Height != 500) return BadRequest("Invalid image size. Image must be 500x500 pixels.");
-                        if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-                        {
-                            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-                        }
-                        await image.SaveAsJpegAsync(filePath);
+                        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
                     }
-                    var brand = new Brand
-                    {
-                        BrandName = model.BrandName,
-                        Descriptions = model.Descriptions,
-                        CreatedByUser = user,
-                        ImagePath = uniqueFileName
-                    };
-                    _context.Brands.Add(brand);
-                    var result = _context.SaveChangesAsync();
-                    transaction.Commit();
-                    return CreatedAtAction(
-                    nameof(GetBrandById),
-                    new { id = brand.BrandId },
-                    new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
-                    );
+                    await image.SaveAsJpegAsync(filePath);
                 }
-                catch (Exception ex)
+                var brand = new Brand
                 {
-                    transaction.Rollback();
-                    return BadRequest(ex.ToString());
-                }
+                    BrandName = model.BrandName,
+                    Descriptions = model.Descriptions,
+                    CreatedByUser = user,
+                    ImagePath = uniqueFileName
+                };
+                _context.Brands.Add(brand);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return CreatedAtAction(
+                nameof(GetBrandById),
+                new { id = brand.BrandId },
+                new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
+                );
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return BadRequest(ex.ToString());
             }
         }
 
         [HttpPut("update-brand/{id}")]
-        public async Task<IActionResult> UpdateBrand(int id, [FromForm] BrandDto model)
+        public async Task<IActionResult> UpdateBrand(int id, [FromForm] UpdateBrandDto model)
         {
+            if (model.DataChanged == false) return Ok("No data field changed!");
             var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
             if (brand == null) return BadRequest("Brand does not exist, please try again");
+            string fileImagePath = null;
+            if (model.ImageChanged == true)
+            {
+                var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
+                if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
+                string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
+                fileImagePath = filePath;
+                using (var image = Image.Load(model.Image.OpenReadStream()))
+                {
+                    if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                    }
+                    await image.SaveAsJpegAsync(filePath);
+                }
+            }
+            using var transaction = await _context.Database.BeginTransactionAsync();
             var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
             if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please try with another name");
             try
             {
                 brand.BrandName = model.BrandName;
-                brand.Descriptions = model.Description;
-                brand.ImagePath = model.ImagePath;
+                brand.Descriptions = model.Descriptions;
+                if (fileImagePath != null)
+                {
+                    brand.ImagePath = fileImagePath;
+                }
                 _context.Update(brand);
+                await transaction.CommitAsync();
                 return Ok("Brand has been update !");
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 return BadRequest(ex.ToString());
             }
         }

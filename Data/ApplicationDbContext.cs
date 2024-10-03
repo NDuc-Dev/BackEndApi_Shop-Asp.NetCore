@@ -1,12 +1,17 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using WebIdentityApi.Models;
 
 namespace WebIdentityApi.Data
 {
     public class ApplicationDbContext : IdentityDbContext<User>
     {
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.ConfigureWarnings(w => w.Ignore(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
+        }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
 
@@ -77,7 +82,7 @@ namespace WebIdentityApi.Data
 
             builder.Entity<ProductColor>()
                 .HasMany(pcs => pcs.ProductColorSizes)
-                .WithOne(pc => pc.ProductColor )
+                .WithOne(pc => pc.ProductColor)
                 .HasForeignKey(pcs => pcs.ProductColorSizeId);
 
 
