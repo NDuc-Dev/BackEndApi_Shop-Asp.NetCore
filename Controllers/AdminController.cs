@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Account;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using WebIdentityApi.DTOs.Brand;
 using WebIdentityApi.DTOs.Color;
 using WebIdentityApi.DTOs.Product;
@@ -186,47 +185,49 @@ namespace WebIdentityApi.Controllers
             {
                 return BadRequest(ModelState);
             }
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
-                if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
-                string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
-                var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-                var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-                var user = await _jwtService.GetUserInfoFromJwt(token);
-                if (user == null) return BadRequest("User not found!");
-                var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
-                if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
-                using (var image = Image.Load(model.Image.OpenReadStream()))
+                try
                 {
-                    if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                    var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
+                    if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
+                    string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
+                    var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
+                    var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+                    var user = await _jwtService.GetUserInfoFromJwt(token);
+                    if (user == null) return BadRequest("User not found!");
+                    var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
+                    if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
+                    using (var image = Image.Load(model.Image.OpenReadStream()))
                     {
-                        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                        if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                        }
+                        await image.SaveAsJpegAsync(filePath);
                     }
-                    await image.SaveAsJpegAsync(filePath);
+                    var brand = new Brand
+                    {
+                        BrandName = model.BrandName,
+                        Descriptions = model.Descriptions,
+                        CreatedByUser = user,
+                        ImagePath = uniqueFileName
+                    };
+                    _context.Brands.Add(brand);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return CreatedAtAction(
+                    nameof(GetBrandById),
+                    new { id = brand.BrandId },
+                    new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
+                    );
                 }
-                var brand = new Brand
+                catch (Exception ex)
                 {
-                    BrandName = model.BrandName,
-                    Descriptions = model.Descriptions,
-                    CreatedByUser = user,
-                    ImagePath = uniqueFileName
-                };
-                _context.Brands.Add(brand);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-                return CreatedAtAction(
-                nameof(GetBrandById),
-                new { id = brand.BrandId },
-                new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
-                );
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return BadRequest(ex.ToString());
+                    await transaction.RollbackAsync();
+                    return BadRequest(ex.ToString());
+                }
             }
         }
 
@@ -253,25 +254,28 @@ namespace WebIdentityApi.Controllers
                     await image.SaveAsJpegAsync(filePath);
                 }
             }
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
-            if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please try with another name");
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                brand.BrandName = model.BrandName;
-                brand.Descriptions = model.Descriptions;
-                if (fileImagePath != null)
+
+                var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
+                if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please try with another name");
+                try
                 {
-                    brand.ImagePath = fileImagePath;
+                    brand.BrandName = model.BrandName;
+                    brand.Descriptions = model.Descriptions;
+                    if (fileImagePath != null)
+                    {
+                        brand.ImagePath = fileImagePath;
+                    }
+                    _context.Update(brand);
+                    await transaction.CommitAsync();
+                    return Ok("Brand has been update !");
                 }
-                _context.Update(brand);
-                await transaction.CommitAsync();
-                return Ok("Brand has been update !");
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return BadRequest(ex.ToString());
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(ex.ToString());
+                }
             }
         }
         #endregion
@@ -296,16 +300,28 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> CreateColor(ColorDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var color = new Models.Color
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                ColorName = model.ColorName
-            };
-            _context.Colors.Add(color);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetColorById),
-                new { id = color.ColorId },
-                new { title = "Color Created", message = $"Create {model.ColorName} color successfully!" }
-                );
+                try
+                {
+                    var color = new Models.Color
+                    {
+                        ColorName = model.ColorName
+                    };
+                    _context.Colors.Add(color);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return CreatedAtAction(nameof(GetColorById),
+                        new { id = color.ColorId },
+                        new { title = "Color Created", message = $"Create {model.ColorName} color successfully!" }
+                        );
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(ex.ToString());
+                }
+            }
         }
 
         [HttpPut("update-color/{id}")]
@@ -315,15 +331,22 @@ namespace WebIdentityApi.Controllers
             if (color == null) return BadRequest("Color does not exist !");
             var existColor = await _context.Colors.FirstOrDefaultAsync(c => c.ColorName == model.ColorName);
             if (existColor != null) return BadRequest("Color name has been exist, please try with another name again !");
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                color.ColorName = model.ColorName;
-                _context.Update(color);
-                return Ok("Update Color Successfully !");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.ToString());
+                try
+                {
+                    color.ColorName = model.ColorName;
+                    _context.Update(color);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return Ok("Update Color Successfully !");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(ex.ToString());
+                }
+
             }
         }
         #endregion
@@ -350,24 +373,27 @@ namespace WebIdentityApi.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var existName = await _context.NameTags.FirstOrDefaultAsync(n => n.Tag == model.Tag);
             if (existName != null) return BadRequest("Name tag has been exist, please try again !");
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var nameTag = new NameTag
+                try
                 {
-                    Tag = model.Tag,
-                };
-                _context.NameTags.Add(nameTag);
-                return CreatedAtAction(nameof(GetNameTagById),
-                new { id = nameTag.NameTagId },
-                new { title = "Brand Created", message = $"Create {model.Tag} tag successfully!" }
-                );
+                    var nameTag = new NameTag
+                    {
+                        Tag = model.Tag,
+                    };
+                    _context.NameTags.Add(nameTag);
+                    await transaction.CommitAsync();
+                    return CreatedAtAction(nameof(GetNameTagById),
+                    new { id = nameTag.NameTagId },
+                    new { title = "Brand Created", message = $"Create {model.Tag} tag successfully!" }
+                    );
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(ex.Message);
+                }
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
-
         }
         #endregion
 
@@ -403,38 +429,50 @@ namespace WebIdentityApi.Controllers
             return Ok(product);
         }
 
-        //[HttpPost("create-product")]
-        //public async Task<IActionResult> CreateProduct(CreateProductDto model)
-        //{
-        //    var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-        //    var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-        //    var user = await _jwtService.GetUserInfoFromJwt(token);
-        //    var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
-        //    var product = new Product
-        //    {
-        //        ProductName = model.ProductName,
-        //        Description = model.ProductDescription,
-        //        Brand = brand,
-        //        CreatedByUser = user,
-        //    };
-        //    _context.Products.Add(product);
-        //    foreach (var variantDto in model.Variants)
-        //    {
-        //        var size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == variantDto.SizeId);
-        //        var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variantDto.ColorId);
-        //        var productVariant = new ProductVariant
-        //        {
-        //            Color = color,
-        //            Size = size,
-        //            UnitPrice = variantDto.UnitPrice,
-        //            Quantity = variantDto.Quantity,
-        //            Product = product
-        //        };
-        //        _context.ProductVariants.Add(productVariant);
-        //    }
-        //    await _context.SaveChangesAsync();
-        //    return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
-        //}
+        [HttpPost("create-product")]
+        public async Task<IActionResult> CreateProduct(CreateProductDto model)
+        {
+            var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
+            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+            var user = await _jwtService.GetUserInfoFromJwt(token);
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
+            var product = new Product
+            {
+                ProductName = model.ProductName,
+                Description = model.ProductDescription,
+                Brand = brand,
+                CreatedByUser = user,
+            };
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+            foreach (var variant in model.Variants)
+            {
+                var productColor = new ProductColor
+                {
+                    ProductId = product.ProductId,
+                    ColorId = variant.ColorId,
+                    Price = variant.Price
+                };
+
+                _context.ProductColors.Add(productColor);
+                await _context.SaveChangesAsync();
+
+                foreach (var size in variant.ProductColorSize)
+                {
+                    var productColorSize = new ProductColorSize
+                    {
+                        ProductColorId = productColor.ProductColorId,
+                        SizeId = size.SizeId,
+                        Quantity = size.Quantity
+                    };
+
+                    _context.ProductColorSizes.Add(productColorSize);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
+        }
         #endregion
 
         #region Private Helper Method

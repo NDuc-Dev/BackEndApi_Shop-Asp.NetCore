@@ -25,7 +25,7 @@ namespace WebIdentityApi.Data
         public DbSet<ProductNameTag> ProductNameTags { get; set; }
         public DbSet<OrderDetails> OrderDetails { get; set; }
         public DbSet<ProductColor> ProductColors { get; set; }
-        public DbSet<ProductColorSize> ProductColorsSizes { get; set; }
+        public DbSet<ProductColorSize> ProductColorSizes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
