@@ -430,48 +430,74 @@ namespace WebIdentityApi.Controllers
         }
 
         [HttpPost("create-product")]
-        public async Task<IActionResult> CreateProduct(CreateProductDto model)
+        public async Task<IActionResult> CreateProduct([FromForm] CreateProductDto model)
         {
             var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
             var token = authorizationHeader.Substring("Bearer ".Length).Trim();
             var user = await _jwtService.GetUserInfoFromJwt(token);
             var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
-            var product = new Product
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                ProductName = model.ProductName,
-                Description = model.ProductDescription,
-                Brand = brand,
-                CreatedByUser = user,
-            };
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            foreach (var variant in model.Variants)
-            {
-                var productColor = new ProductColor
+                try
                 {
-                    ProductId = product.ProductId,
-                    ColorId = variant.ColorId,
-                    Price = variant.Price
-                };
-
-                _context.ProductColors.Add(productColor);
-                await _context.SaveChangesAsync();
-
-                foreach (var size in variant.ProductColorSize)
-                {
-                    var productColorSize = new ProductColorSize
+                    var product = new Product
                     {
-                        ProductColorId = productColor.ProductColorId,
-                        SizeId = size.SizeId,
-                        Quantity = size.Quantity
+                        ProductName = model.ProductName,
+                        Description = model.ProductDescription,
+                        Brand = brand,
+                        CreatedByUser = user,
                     };
+                    _context.Products.Add(product);
+                    await _context.SaveChangesAsync();
+                    foreach (var variant in model.Variants)
+                    {
+                        var imagesPath = string.Empty;
+                        foreach (var image in variant.images)
+                        {
+                            var uniqueFileName = Guid.NewGuid().ToString() + "_" + image.FileName;
+                            var filePath = Path.Combine("wwwroot/images/products", uniqueFileName);
 
-                    _context.ProductColorSizes.Add(productColorSize);
+                            using (var fileStream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await image.CopyToAsync(fileStream);
+                            }
+                            imagesPath += $"{filePath};";
+                        }
+                        imagesPath = imagesPath.TrimEnd(';');
+                        var productColor = new ProductColor
+                        {
+                            Product = product,
+                            Color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId),
+                            Price = variant.Price,
+                            ImagePath = imagesPath
+                        };
+
+                        _context.ProductColors.Add(productColor);
+                        await _context.SaveChangesAsync();
+
+                        foreach (var size in variant.ProductColorSize)
+                        {
+                            var productColorSize = new ProductColorSize
+                            {
+                                ProductColor = productColor,
+                                Size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == size.SizeId),
+                                Quantity = size.Quantity
+                            };
+                            _context.ProductColorSizes.Add(productColorSize);
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
                 }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(ex.ToString());
+                }
+
             }
 
-            await _context.SaveChangesAsync();
-            return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
         }
         #endregion
 
