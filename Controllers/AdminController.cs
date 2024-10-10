@@ -525,7 +525,7 @@ namespace WebIdentityApi.Controllers
             return await _emailService.SendEmail(emaiSend);
         }
 
-        public async Task<string> GenerateDefaultPassword()
+        private async Task<string> GenerateDefaultPassword()
         {
             Random random = new Random();
 

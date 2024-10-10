@@ -9,7 +9,7 @@ namespace WebIdentityApi.DTOs.ProductColor
     {
         public int ColorId { get; set; }
         public decimal Price { get; set; }
-        public List<IFormFile> images { get; set; }
+        public IFormFileCollection images { get; set; }
         public List<CreateProductColorSizeDto> ProductColorSize { get; set; }
     }
 }

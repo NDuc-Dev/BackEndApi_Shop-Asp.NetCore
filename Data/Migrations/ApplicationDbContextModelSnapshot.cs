@@ -51,21 +51,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "341b4c77-197f-45e0-87dc-d6345c8b9ea0",
+                            Id = "85ea0078-27bd-411a-95cd-bc4c1a1792a7",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "69c008ed-1859-42bf-bb8e-2fae577436a6",
+                            Id = "0ffbee2f-8cb3-489c-a243-b39ed703aee5",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "3a7a5a3f-d8f9-4cdf-8dd2-935960983bd0",
+                            Id = "1c7053fd-dc7c-4f22-9fda-2d477342841a",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -327,9 +327,6 @@ namespace WebIdentityApi.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImagePath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ProductName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -393,7 +390,7 @@ namespace WebIdentityApi.Data.Migrations
 
                     b.HasIndex("SizeId");
 
-                    b.ToTable("ProductColorsSizes");
+                    b.ToTable("ProductColorSizes");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.ProductNameTag", b =>
