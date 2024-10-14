@@ -13,6 +13,8 @@ using WebIdentityApi.Data;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
 using System.Text.Json.Serialization;
+using Microsoft.OpenApi.Models;
+using System.Collections.Generic;
 
 namespace WebIdentityApi
 {
@@ -31,7 +33,32 @@ namespace WebIdentityApi
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(opt =>
+            {
+                opt.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Description = "Bearer Token",
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                    BearerFormat = "JWT",
+                    Scheme = "bearer"
+                });
+                opt.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme {
+                            Name = "Bearer",
+                            In = ParameterLocation.Header,
+                            Reference = new OpenApiReference {
+                                Id = "Bearer",
+                                Type = ReferenceType.SecurityScheme
+                            }
+                        },
+                        new List<string>()
+                    }
+                });
+            });
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
@@ -76,7 +103,7 @@ namespace WebIdentityApi
                     {
                         Errors = errors
                     };
-                    return new BadRequestObjectResult(toReturn) ;
+                    return new BadRequestObjectResult(toReturn);
                 };
             });
 

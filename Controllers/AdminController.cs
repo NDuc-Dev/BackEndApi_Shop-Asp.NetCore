@@ -13,13 +13,14 @@ using System.Text;
 using System.Threading.Tasks;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Account;
-using SixLabors.ImageSharp;
+using System.Drawing;
 using WebIdentityApi.DTOs.Brand;
 using WebIdentityApi.DTOs.Color;
 using WebIdentityApi.DTOs.Product;
 using WebIdentityApi.DTOs.Staff;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
+using SixLabors.ImageSharp;
 
 namespace WebIdentityApi.Controllers
 {
@@ -199,7 +200,7 @@ namespace WebIdentityApi.Controllers
                     if (user == null) return BadRequest("User not found!");
                     var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
                     if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
-                    using (var image = Image.Load(model.Image.OpenReadStream()))
+                    using (var image = SixLabors.ImageSharp.Image.Load(model.Image.OpenReadStream()))
                     {
                         if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                         {
@@ -245,7 +246,7 @@ namespace WebIdentityApi.Controllers
                 string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
                 string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
                 fileImagePath = filePath;
-                using (var image = Image.Load(model.Image.OpenReadStream()))
+                using (var image = SixLabors.ImageSharp.Image.Load(model.Image.OpenReadStream()))
                 {
                     if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                     {
@@ -430,7 +431,7 @@ namespace WebIdentityApi.Controllers
         }
 
         [HttpPost("create-product")]
-        public async Task<IActionResult> CreateProduct([FromForm] CreateProductDto model)
+        public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto model)
         {
             var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
             var token = authorizationHeader.Substring("Bearer ".Length).Trim();
@@ -449,17 +450,20 @@ namespace WebIdentityApi.Controllers
                     };
                     _context.Products.Add(product);
                     await _context.SaveChangesAsync();
+
                     foreach (var variant in model.Variants)
                     {
                         var imagesPath = string.Empty;
                         foreach (var image in variant.images)
                         {
-                            var uniqueFileName = Guid.NewGuid().ToString() + "_" + image.FileName;
+                            byte[] imageBytes = Convert.FromBase64String(image);
+                            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ".jpg";
                             var filePath = Path.Combine("wwwroot/images/products", uniqueFileName);
-
-                            using (var fileStream = new FileStream(filePath, FileMode.Create))
+                            using (MemoryStream ms = new MemoryStream(imageBytes))
                             {
-                                await image.CopyToAsync(fileStream);
+                                System.Drawing.Image pic = System.Drawing.Image.FromStream(ms);
+
+                                pic.Save(filePath);
                             }
                             imagesPath += $"{filePath};";
                         }
