@@ -1,0 +1,35 @@
+//ACCOUNT
+//Login
+{
+    "userName": "string",
+    "password": "string"
+}
+//Register
+{
+    "fullName": "string",
+    "email" == userName: "string" ,
+    "password": "string"
+}
+//PRODUCT
+//Create Product
+{
+    "productName": "string",
+    "productDescription": "string",
+    "brandId": 0,
+    "nameTag": ["number","number"],
+    "variants": [
+        {
+            "colorId": 0,
+            "price": 0,
+            "images": [
+                "base64-string"
+            ],
+            "productColorSize": [
+                {
+                    "sizeId": 0,
+                    "quantity": 0
+                }
+            ]
+        }
+    ]
+}

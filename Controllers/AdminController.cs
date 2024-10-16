@@ -20,6 +20,7 @@ using WebIdentityApi.DTOs.Staff;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
 using SixLabors.ImageSharp;
+using WebIdentityApi.DTOs.NameTag;
 
 namespace WebIdentityApi.Controllers
 {
@@ -368,10 +369,10 @@ namespace WebIdentityApi.Controllers
         }
 
         [HttpPost("create-name-tag")]
-        public async Task<IActionResult> CreateNameTag(NameTag model)
+        public async Task<IActionResult> CreateNameTag(NameTagDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var existName = await _context.NameTags.FirstOrDefaultAsync(n => n.Tag == model.Tag);
+            var existName = await _context.NameTags.FirstOrDefaultAsync(n => n.Tag == model.TagName);
             if (existName != null) return BadRequest("Name tag has been exist, please try again !");
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
@@ -379,13 +380,13 @@ namespace WebIdentityApi.Controllers
                 {
                     var nameTag = new NameTag
                     {
-                        Tag = model.Tag,
+                        Tag = model.TagName,
                     };
                     _context.NameTags.Add(nameTag);
                     await transaction.CommitAsync();
                     return CreatedAtAction(nameof(GetNameTagById),
                     new { id = nameTag.NameTagId },
-                    new { title = "Brand Created", message = $"Create {model.Tag} tag successfully!" }
+                    new { title = "Tag Created", message = $"Create {model.TagName} tag successfully!" }
                     );
                 }
                 catch (Exception ex)
@@ -449,6 +450,20 @@ namespace WebIdentityApi.Controllers
                     };
                     _context.Products.Add(product);
                     await _context.SaveChangesAsync();
+                    if (model.NameTagId != null && model.NameTagId.Count > 0)
+                    {
+                        foreach (var tagId in model.NameTagId)
+                        {
+                            var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
+                            var productNameTag = new ProductNameTag
+                            {
+                                Product = product,
+                                NameTag = nameTag,
+                            };
+                            _context.ProductNameTags.Add(productNameTag);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
 
                     foreach (var variant in model.Variants)
                     {
