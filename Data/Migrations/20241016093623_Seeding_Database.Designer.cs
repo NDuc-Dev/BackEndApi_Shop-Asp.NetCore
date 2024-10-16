@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebIdentityApi.Data;
 
 #nullable disable
 
-namespace WebIdentityApi.Migrations
+namespace WebIdentityApi.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241016093623_Seeding_Database")]
+    partial class Seeding_Database
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,21 +54,21 @@ namespace WebIdentityApi.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "6ca49586-c934-4c95-8efb-8eafc5466044",
+                            Id = "891f38bb-b8fe-47b6-995d-7c4001486286",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "53e984da-a974-4262-a112-5497341d4384",
+                            Id = "5a1ab2ae-739e-429c-9bab-818b2a74793a",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "59254b35-281c-4859-af62-982695af281d",
+                            Id = "4c054425-f6f5-4e23-9aaa-2cf996563193",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
