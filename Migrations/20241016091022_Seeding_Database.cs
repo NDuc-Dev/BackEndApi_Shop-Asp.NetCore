@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace WebIdentityApi.Data.Migrations
+namespace WebIdentityApi.Migrations
 {
     /// <inheritdoc />
-    public partial class SeedingDatabase : Migration
+    public partial class Seeding_Database : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -336,7 +336,8 @@ namespace WebIdentityApi.Data.Migrations
                 name: "ProductColorSizes",
                 columns: table => new
                 {
-                    ProductColorSizeId = table.Column<int>(type: "int", nullable: false),
+                    ProductColorSizeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     ProductColorId = table.Column<int>(type: "int", nullable: false),
                     SizeId = table.Column<int>(type: "int", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false)
@@ -345,8 +346,8 @@ namespace WebIdentityApi.Data.Migrations
                 {
                     table.PrimaryKey("PK_ProductColorSizes", x => x.ProductColorSizeId);
                     table.ForeignKey(
-                        name: "FK_ProductColorSizes_ProductColors_ProductColorSizeId",
-                        column: x => x.ProductColorSizeId,
+                        name: "FK_ProductColorSizes_ProductColors_ProductColorId",
+                        column: x => x.ProductColorId,
                         principalTable: "ProductColors",
                         principalColumn: "ProductColorId",
                         onDelete: ReferentialAction.Cascade);
@@ -392,9 +393,9 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "0ffbee2f-8cb3-489c-a243-b39ed703aee5", "2", "Staff", "Staff" },
-                    { "1c7053fd-dc7c-4f22-9fda-2d477342841a", "3", "Customer", "Customer" },
-                    { "85ea0078-27bd-411a-95cd-bc4c1a1792a7", "1", "Admin", "Admin" }
+                    { "53e984da-a974-4262-a112-5497341d4384", "2", "Staff", "Staff" },
+                    { "59254b35-281c-4859-af62-982695af281d", "3", "Customer", "Customer" },
+                    { "6ca49586-c934-4c95-8efb-8eafc5466044", "1", "Admin", "Admin" }
                 });
 
             migrationBuilder.InsertData(
@@ -482,6 +483,11 @@ namespace WebIdentityApi.Data.Migrations
                 name: "IX_ProductColors_ProductId",
                 table: "ProductColors",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductColorSizes_ProductColorId",
+                table: "ProductColorSizes",
+                column: "ProductColorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductColorSizes_SizeId",

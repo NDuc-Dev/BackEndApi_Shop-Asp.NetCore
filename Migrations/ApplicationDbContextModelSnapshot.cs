@@ -8,7 +8,7 @@ using WebIdentityApi.Data;
 
 #nullable disable
 
-namespace WebIdentityApi.Data.Migrations
+namespace WebIdentityApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -51,21 +51,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "85ea0078-27bd-411a-95cd-bc4c1a1792a7",
+                            Id = "6ca49586-c934-4c95-8efb-8eafc5466044",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "0ffbee2f-8cb3-489c-a243-b39ed703aee5",
+                            Id = "53e984da-a974-4262-a112-5497341d4384",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "1c7053fd-dc7c-4f22-9fda-2d477342841a",
+                            Id = "59254b35-281c-4859-af62-982695af281d",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -375,7 +375,10 @@ namespace WebIdentityApi.Data.Migrations
             modelBuilder.Entity("WebIdentityApi.Models.ProductColorSize", b =>
                 {
                     b.Property<int>("ProductColorSizeId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductColorSizeId"));
 
                     b.Property<int>("ProductColorId")
                         .HasColumnType("int");
@@ -387,6 +390,8 @@ namespace WebIdentityApi.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("ProductColorSizeId");
+
+                    b.HasIndex("ProductColorId");
 
                     b.HasIndex("SizeId");
 
@@ -702,7 +707,7 @@ namespace WebIdentityApi.Data.Migrations
                 {
                     b.HasOne("WebIdentityApi.Models.ProductColor", "ProductColor")
                         .WithMany("ProductColorSizes")
-                        .HasForeignKey("ProductColorSizeId")
+                        .HasForeignKey("ProductColorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

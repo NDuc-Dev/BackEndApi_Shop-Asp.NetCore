@@ -13,7 +13,6 @@ using System.Text;
 using System.Threading.Tasks;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Account;
-using System.Drawing;
 using WebIdentityApi.DTOs.Brand;
 using WebIdentityApi.DTOs.Color;
 using WebIdentityApi.DTOs.Product;
@@ -200,7 +199,7 @@ namespace WebIdentityApi.Controllers
                     if (user == null) return BadRequest("User not found!");
                     var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
                     if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
-                    using (var image = SixLabors.ImageSharp.Image.Load(model.Image.OpenReadStream()))
+                    using (var image = Image.Load(model.Image.OpenReadStream()))
                     {
                         if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                         {
@@ -246,7 +245,7 @@ namespace WebIdentityApi.Controllers
                 string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
                 string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
                 fileImagePath = filePath;
-                using (var image = SixLabors.ImageSharp.Image.Load(model.Image.OpenReadStream()))
+                using (var image = Image.Load(model.Image.OpenReadStream()))
                 {
                     if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                     {
@@ -459,11 +458,9 @@ namespace WebIdentityApi.Controllers
                             byte[] imageBytes = Convert.FromBase64String(image);
                             var uniqueFileName = Guid.NewGuid().ToString() + "_" + ".jpg";
                             var filePath = Path.Combine("wwwroot/images/products", uniqueFileName);
-                            using (MemoryStream ms = new MemoryStream(imageBytes))
+                            using (var img = Image.Load(imageBytes))
                             {
-                                System.Drawing.Image pic = System.Drawing.Image.FromStream(ms);
-
-                                pic.Save(filePath);
+                                img.Save(filePath);
                             }
                             imagesPath += $"{filePath};";
                         }

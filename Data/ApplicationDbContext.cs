@@ -83,7 +83,7 @@ namespace WebIdentityApi.Data
             builder.Entity<ProductColor>()
                 .HasMany(pcs => pcs.ProductColorSizes)
                 .WithOne(pc => pc.ProductColor)
-                .HasForeignKey(pcs => pcs.ProductColorSizeId);
+                .HasForeignKey(pcs => pcs.ProductColorId);
 
 
 
