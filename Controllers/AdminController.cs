@@ -21,6 +21,7 @@ using WebIdentityApi.Models;
 using WebIdentityApi.Services;
 using SixLabors.ImageSharp;
 using WebIdentityApi.DTOs.NameTag;
+using System.Runtime.Intrinsics.X86;
 
 namespace WebIdentityApi.Controllers
 {
@@ -383,6 +384,7 @@ namespace WebIdentityApi.Controllers
                         Tag = model.TagName,
                     };
                     _context.NameTags.Add(nameTag);
+                    await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     return CreatedAtAction(nameof(GetNameTagById),
                     new { id = nameTag.NameTagId },
@@ -427,6 +429,28 @@ namespace WebIdentityApi.Controllers
         {
             var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
             if (product == null) return BadRequest("Product does not exist !");
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == product.BrandId);
+            var productColor = await _context.ProductColors.Where(pc => pc.ProductId == product.ProductId)
+            .ToListAsync();
+            var productTag = await _context.ProductNameTags.Where(pt => pt.ProductId == product.ProductId)
+            .ToListAsync();
+            var nameTagDtos = _context.NameTags
+            .Where(nt => nt.ProductTags.Any(pt => pt.ProductId == product.ProductId))
+            .Select(nt => new NameTagDto { TagName = nt.Tag })
+            .ToList();
+            // var NameTag = new List<NameTagDto>();
+            // foreach (var ptag in productTag)
+            // {
+            //     var tag = await _context.NameTags.FirstOrDefaultAsync(nt => nt.NameTagId == ptag.NameTagId);
+            // }
+            var productDto = new ProductDto
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductDescription = product.Description,
+                Status = product.Status,
+                Tag = nameTagDtos
+            };
             return Ok(product);
         }
 

@@ -9,8 +9,9 @@ namespace WebIdentityApi.DTOs.ProductColor
         public int ProductColorId { get; set; }
         public int ProductId { get; set; }
         public int ColorId { get; set; }
-        public decimal Price { get; set; }
-        public string ImagePath { get; set; }
-        public List<ProductColorSizeDto> ProductColorSize {get; set;}
+        public string ColorName { get; set; }
+        public decimal UnitPrice { get; set; }
+        public List<string> ImagePath { get; set; }
+        public List<ProductColorSizeDto> ProductColorSize { get; set; }
     }
 }
