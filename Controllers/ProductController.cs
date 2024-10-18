@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebIdentityApi.Data;
-using WebIdentityApi.DTOs.Admin.Product;
+using WebIdentityApi.DTOs.Product;
 using Microsoft.EntityFrameworkCore;
 
 namespace WebIdentityApi.Controllers

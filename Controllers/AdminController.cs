@@ -451,7 +451,7 @@ namespace WebIdentityApi.Controllers
                 Status = product.Status,
                 Tag = nameTagDtos
             };
-            return Ok(product);
+            return Ok(productDto);
         }
 
         [HttpPost("create-product")]
