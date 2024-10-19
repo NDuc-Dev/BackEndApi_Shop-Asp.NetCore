@@ -22,6 +22,8 @@ using WebIdentityApi.Services;
 using SixLabors.ImageSharp;
 using WebIdentityApi.DTOs.NameTag;
 using System.Runtime.Intrinsics.X86;
+using WebIdentityApi.DTOs.ProductColor;
+using AutoMapper;
 
 namespace WebIdentityApi.Controllers
 {
@@ -35,18 +37,21 @@ namespace WebIdentityApi.Controllers
         private readonly EmailService _emailService;
         private IConfiguration _config;
         private ApplicationDbContext _context;
+        private readonly IMapper _mapper;
         public AdminController(
             UserManager<User> userManager,
             JwtService jwtService,
             EmailService emailService,
             IConfiguration config,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IMapper mapper)
         {
             _userManager = userManager;
             _jwtService = jwtService;
             _emailService = emailService;
             _config = config;
             _context = context;
+            _mapper = mapper;
         }
         #region Staff Manage Function
 
@@ -427,30 +432,45 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-product/{id}")]
         public async Task<IActionResult> GetProductById(int id)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
-            if (product == null) return BadRequest("Product does not exist !");
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == product.BrandId);
-            var productColor = await _context.ProductColors.Where(pc => pc.ProductId == product.ProductId)
-            .ToListAsync();
-            var productTag = await _context.ProductNameTags.Where(pt => pt.ProductId == product.ProductId)
-            .ToListAsync();
-            var nameTagDtos = _context.NameTags
-            .Where(nt => nt.ProductTags.Any(pt => pt.ProductId == product.ProductId))
-            .Select(nt => new NameTagDto { TagName = nt.Tag })
-            .ToList();
-            // var NameTag = new List<NameTagDto>();
-            // foreach (var ptag in productTag)
+            // var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
+            // if (product == null) return BadRequest("Product does not exist !");
+            // var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == product.BrandId);
+            // var productColor = await _context.ProductColors.Where(pc => pc.ProductId == product.ProductId)
+            // .ToListAsync();
+            // var productTag = await _context.ProductNameTags.Where(pt => pt.ProductId == product.ProductId)
+            // .ToListAsync();
+            // var productColorDto = _context.Colors
+            // .Where(c => c.ProductColor.Any(pc => pc.ProductId == product.ProductId))
+            // .Select(pc => new ProductColorDto
             // {
-            //     var tag = await _context.NameTags.FirstOrDefaultAsync(nt => nt.NameTagId == ptag.NameTagId);
-            // }
-            var productDto = new ProductDto
-            {
-                ProductId = product.ProductId,
-                ProductName = product.ProductName,
-                ProductDescription = product.Description,
-                Status = product.Status,
-                Tag = nameTagDtos
-            };
+            //     ColorId = pc.ColorId,
+            //     ColorName = pc.ColorName,
+            // });
+
+
+            // var nameTagDtos = _context.NameTags
+            // .Where(nt => nt.ProductTags.Any(pt => pt.ProductId == product.ProductId))
+            // .Select(nt => new NameTagDto { TagName = nt.Tag })
+            // .ToList();
+
+
+            // var productDto = new ProductDto
+            // {
+            //     ProductId = product.ProductId,
+            //     ProductName = product.ProductName,
+            //     ProductDescription = product.Description,
+            //     Status = product.Status,
+            //     Tag = nameTagDtos
+            // };
+
+            var product = await _context.Products
+        .Include(p => p.NameTags)
+        .Include(p => p.ProductColor)
+        .ThenInclude(pc => pc.ProductColorSizes)
+        .FirstOrDefaultAsync(p => p.ProductId == id);
+
+            var productDto = _mapper.Map<ProductDto>(product);
+
             return Ok(productDto);
         }
 

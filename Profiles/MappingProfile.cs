@@ -1,5 +1,8 @@
+using System.Linq;
 using AutoMapper;
+using WebIdentityApi.DTOs.NameTag;
 using WebIdentityApi.DTOs.Product;
+using WebIdentityApi.DTOs.ProductColor;
 using WebIdentityApi.Models;
 
 public class MappingProfile : Profile
@@ -7,15 +10,29 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
 
-        CreateMap<ProductDto, Product>()
-            .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
-            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.ProductDescription))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            .ForMember(dest => dest.NameTags, opt => opt.Ignore())
-            .ForMember(dest => dest.ProductColor, opt => opt.Ignore());
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
             .ForMember(dest => dest.ProductDescription, opt => opt.MapFrom(src => src.Description))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
+            .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(nt => nt.NameTag.Tag)))
+            .ForMember(dest => dest.Variant, opt => opt.MapFrom(src => src.ProductColor));
+
+        CreateMap<NameTag, NameTagDto>()
+            .ForMember(dest => dest.TagName, opt => opt.MapFrom(src => src.Tag));
+
+        CreateMap<ProductColor, ProductColorDto>()
+            .ForMember(dest => dest.ColorName, opt => opt.MapFrom(src => src.Color.ColorName))
+            .ForMember(dest => dest.ColorId, opt => opt.MapFrom(src => src.ColorId))
+            .ForMember(dest => dest.UnitPrice, opt => opt.MapFrom(src => src.Price))
+            .ForMember(dest => dest.ProductColorId, opt => opt.MapFrom(src => src.ProductColorId))
+            .ForMember(dest => dest.ProductColorSize, opt => opt.MapFrom(src => src.ProductColorSizes));
+
+
+        CreateMap<ProductColorDto, ProductColor>()
+            .ForMember(dest => dest.ColorId, opt => opt.MapFrom(src => src.ColorId))
+            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.UnitPrice))
+            .ForMember(dest => dest.ProductColorId, opt => opt.MapFrom(src => src.ProductColorId))
+            .ForMember(dest => dest.Product, opt => opt.Ignore())
+            .ForMember(dest => dest.Color, opt => opt.Ignore());
     }
 }

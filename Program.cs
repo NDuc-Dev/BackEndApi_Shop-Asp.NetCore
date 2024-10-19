@@ -65,6 +65,8 @@ namespace WebIdentityApi
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
+
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<EmailService>();
 
