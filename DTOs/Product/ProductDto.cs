@@ -9,8 +9,9 @@ namespace WebIdentityApi.DTOs.Product
         public int ProductId { get; set; }
         public string ProductName { get; set; }
         public string ProductDescription { get; set; }
+        public string BrandName { get; set; }
         public bool Status { get; set; }
-        public List<NameTagDto> Tag { get; set; }
+        public List<string> Tag { get; set; }
         public List<ProductColorDto> Variant { get; set; }
     }
 }

@@ -432,7 +432,12 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-product/{id}")]
         public async Task<IActionResult> GetProductById(int id)
         {
-            // var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
+            // var product = await _context.Products
+            // .Include(p => p.Brand)
+            // .Include(p => p.ProductColor)
+            // .Include(p => p.ProductColor)
+            // .ThenInclude(pc => pc.ProductColorSizes)
+            // .FirstOrDefaultAsync(p => p.ProductId == id);
             // if (product == null) return BadRequest("Product does not exist !");
             // var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == product.BrandId);
             // var productColor = await _context.ProductColors.Where(pc => pc.ProductId == product.ProductId)
@@ -464,14 +469,17 @@ namespace WebIdentityApi.Controllers
             // };
 
             var product = await _context.Products
-        .Include(p => p.NameTags)
-        .Include(p => p.ProductColor)
-        .ThenInclude(pc => pc.ProductColorSizes)
-        .FirstOrDefaultAsync(p => p.ProductId == id);
+            .Include(p => p.Brand)
+            .Include(p => p.NameTags)
+            .Include(p => p.ProductColor)
+            .ThenInclude(pc => pc.ProductColorSizes)
+            .FirstOrDefaultAsync(p => p.ProductId == id);
 
             var productDto = _mapper.Map<ProductDto>(product);
 
             return Ok(productDto);
+            // return Ok(product);
+
         }
 
         [HttpPost("create-product")]
