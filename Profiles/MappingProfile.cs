@@ -14,7 +14,7 @@ public class MappingProfile : Profile
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
             .ForMember(dest => dest.ProductDescription, opt => opt.MapFrom(src => src.Description))
-            .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(pt => pt.NameTag.Tag)))
+            .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(nt => nt.NameTag.Tag)))
             .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand.BrandName))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
             .ForMember(dest => dest.Variant, opt => opt.MapFrom(src => src.ProductColor));

@@ -432,54 +432,19 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-product/{id}")]
         public async Task<IActionResult> GetProductById(int id)
         {
-            // var product = await _context.Products
-            // .Include(p => p.Brand)
-            // .Include(p => p.ProductColor)
-            // .Include(p => p.ProductColor)
-            // .ThenInclude(pc => pc.ProductColorSizes)
-            // .FirstOrDefaultAsync(p => p.ProductId == id);
-            // if (product == null) return BadRequest("Product does not exist !");
-            // var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == product.BrandId);
-            // var productColor = await _context.ProductColors.Where(pc => pc.ProductId == product.ProductId)
-            // .ToListAsync();
-            // var productTag = await _context.ProductNameTags.Where(pt => pt.ProductId == product.ProductId)
-            // .ToListAsync();
-            // var productColorDto = _context.Colors
-            // .Where(c => c.ProductColor.Any(pc => pc.ProductId == product.ProductId))
-            // .Select(pc => new ProductColorDto
-            // {
-            //     ColorId = pc.ColorId,
-            //     ColorName = pc.ColorName,
-            // });
-
-
-            // var nameTagDtos = _context.NameTags
-            // .Where(nt => nt.ProductTags.Any(pt => pt.ProductId == product.ProductId))
-            // .Select(nt => new NameTagDto { TagName = nt.Tag })
-            // .ToList();
-
-
-            // var productDto = new ProductDto
-            // {
-            //     ProductId = product.ProductId,
-            //     ProductName = product.ProductName,
-            //     ProductDescription = product.Description,
-            //     Status = product.Status,
-            //     Tag = nameTagDtos
-            // };
-
             var product = await _context.Products
             .Include(p => p.Brand)
             .Include(p => p.NameTags)
+            .ThenInclude(nt => nt.NameTag)
+            .Include(p => p.ProductColor)
+            .ThenInclude(pc => pc.Color)
             .Include(p => p.ProductColor)
             .ThenInclude(pc => pc.ProductColorSizes)
+            .ThenInclude(pc => pc.Size)
             .FirstOrDefaultAsync(p => p.ProductId == id);
-
             var productDto = _mapper.Map<ProductDto>(product);
 
             return Ok(productDto);
-            // return Ok(product);
-
         }
 
         [HttpPost("create-product")]
