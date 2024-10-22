@@ -426,7 +426,14 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-products")]
         public async Task<IActionResult> GetProducts()
         {
-            return Ok(await _context.Products.ToListAsync());
+            var listProduct = await _context.Products
+            .Include(p => p.Brand)
+            .Include(p => p.NameTags)
+            .ThenInclude(nt => nt.NameTag)
+            .Include(p => p.ProductColor)
+            .ToListAsync();
+            var listProductDto = _mapper.Map<List<ProducGetListDto>>(listProduct);
+            return Ok(listProductDto);
         }
 
         [HttpGet("get-product/{id}")]

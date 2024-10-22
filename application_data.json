@@ -1,35 +1,35 @@
-//ACCOUNT
-//Login
 {
-    "userName": "string",
-    "password": "string"
-}
-//Register
-{
-    "fullName": "string",
-    "email" == userName: "string" ,
-    "password": "string"
-}
-//PRODUCT
-//Create Product
-{
-    "productName": "string",
-    "productDescription": "string",
-    "brandId": 0,
-    "nameTag": ["number","number"],
-    "variants": [
+    "$id": "1",
+    "$values": [
         {
-            "colorId": 0,
-            "price": 0,
-            "images": [
-                "base64-string"
-            ],
-            "productColorSize": [
-                {
-                    "sizeId": 0,
-                    "quantity": 0
-                }
-            ]
+            "$id": "2",
+            "productId": 2,
+            "productName": "Nike Air Force 1",
+            "productDescription": "This is Nike Air Force 1",
+            "brandName": "Nike",
+            "tag": {
+                "$id": "3",
+                "$values": [
+                    "Nike",
+                    "Air Force 1"
+                ]
+            },
+            "imagePath": "wwwroot/images/products/dbe68b35-ba03-49a5-a6d3-56d0232242f9_.jpg;wwwroot/images/products/8f51ddd7-7208-422f-87b6-bd4642069b08_.jpg"
+        },
+        {
+            "$id": "4",
+            "productId": 2,
+            "productName": "Nike Air Force 2",
+            "productDescription": "This is Nike Air Force 2",
+            "brandName": "Nike",
+            "tag": {
+                "$id": "5",
+                "$values": [
+                    "Nike",
+                    "Air Force 1"
+                ]
+            },
+            "imagePath": "wwwroot/images/products/dbe68b35-ba03-49a5-a6d3-56d0232242f9_.jpg;wwwroot/images/products/8f51ddd7-7208-422f-87b6-bd4642069b08_.jpg"
         }
     ]
 }
