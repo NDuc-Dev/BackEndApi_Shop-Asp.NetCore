@@ -21,9 +21,9 @@ using WebIdentityApi.Models;
 using WebIdentityApi.Services;
 using SixLabors.ImageSharp;
 using WebIdentityApi.DTOs.NameTag;
-using System.Runtime.Intrinsics.X86;
 using WebIdentityApi.DTOs.ProductColor;
 using AutoMapper;
+using WebIdentityApi.Filters;
 
 namespace WebIdentityApi.Controllers
 {
@@ -434,6 +434,31 @@ namespace WebIdentityApi.Controllers
             .ToListAsync();
             var listProductDto = _mapper.Map<List<ProducGetListDto>>(listProduct);
             return Ok(listProductDto);
+        }
+
+        [HttpGet("products")]
+        public async Task<IActionResult> GetProducts([FromQuery] ProductFilters filter)
+        {
+            var query = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrEmpty(filter.Name))
+            {
+                query = query.Where(p => p.ProductName == filter.Name);
+            }
+            if (filter.Brand.HasValue)
+            {
+                query = query.Where(p => p.BrandId == filter.Brand);
+            }
+            if (filter.Color != null && filter.Color.Any())
+            {
+                query = query.Where(p => p.ProductColor.Any(pc => filter.Color.Contains(pc.ColorId)));
+            }
+            if (filter.Size != null && filter.Size.Any())
+            {
+                query = query.Where(p => p.ProductColor.Any(pc => pc.ProductColorSizes.Any(pcs => filter.Size.Contains(pcs.SizeId))));
+            }
+
+            return Ok(await query.ToListAsync());
         }
 
         [HttpGet("get-product/{id}")]
