@@ -457,8 +457,14 @@ namespace WebIdentityApi.Controllers
             {
                 query = query.Where(p => p.ProductColor.Any(pc => pc.ProductColorSizes.Any(pcs => filter.Size.Contains(pcs.SizeId))));
             }
-
-            return Ok(await query.ToListAsync());
+            await query.Include(p => p.Brand)
+            .Include(p => p.NameTags)
+            .ThenInclude(nt => nt.NameTag)
+            .Include(p => p.ProductColor)
+            .ToListAsync();
+            var listProductDto = _mapper.Map<List<ProducGetListDto>>(query);
+            await Task.Delay(1000);
+            return Ok(listProductDto);
         }
 
         [HttpGet("get-product/{id}")]
