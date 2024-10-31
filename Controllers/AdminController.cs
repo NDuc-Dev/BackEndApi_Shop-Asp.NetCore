@@ -575,6 +575,16 @@ namespace WebIdentityApi.Controllers
             }
 
         }
+
+        [HttpPost("change-status/{id}")]
+        public async Task<IActionResult> ChangeProductStatus(int id)
+        {
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
+            product.Status = product.Status ? false : true;
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+            return Ok("Change product status successfully");
+        }
         #endregion
 
         #region Private Helper Method
