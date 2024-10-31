@@ -21,7 +21,6 @@ using WebIdentityApi.Models;
 using WebIdentityApi.Services;
 using SixLabors.ImageSharp;
 using WebIdentityApi.DTOs.NameTag;
-using WebIdentityApi.DTOs.ProductColor;
 using AutoMapper;
 using WebIdentityApi.Filters;
 
@@ -424,26 +423,18 @@ namespace WebIdentityApi.Controllers
 
         #region Product Manage Function
         [HttpGet("get-products")]
-        public async Task<IActionResult> GetProducts()
+        public async Task<IActionResult> GetProducts([FromQuery] ProductFilters filter, int skip, int take = 9)
         {
-            var listProduct = await _context.Products
-            .Include(p => p.Brand)
-            .Include(p => p.NameTags)
-            .ThenInclude(nt => nt.NameTag)
-            .Include(p => p.ProductColor)
-            .ToListAsync();
-            var listProductDto = _mapper.Map<List<ProducGetListDto>>(listProduct);
-            return Ok(listProductDto);
-        }
+            if (skip < 0 || take <= 0)
+            {
+                return BadRequest("Invalid skip or take value");
+            }
 
-        [HttpGet("products")]
-        public async Task<IActionResult> GetProducts([FromQuery] ProductFilters filter)
-        {
             var query = _context.Products.AsQueryable();
 
             if (!string.IsNullOrEmpty(filter.Name))
             {
-                query = query.Where(p => p.ProductName == filter.Name);
+                query = query.Where(p => p.ProductName.ToLower().Contains(filter.Name.ToLower()));
             }
             if (filter.Brand.HasValue)
             {
@@ -457,14 +448,25 @@ namespace WebIdentityApi.Controllers
             {
                 query = query.Where(p => p.ProductColor.Any(pc => pc.ProductColorSizes.Any(pcs => filter.Size.Contains(pcs.SizeId))));
             }
-            await query.Include(p => p.Brand)
-            .Include(p => p.NameTags)
-            .ThenInclude(nt => nt.NameTag)
-            .Include(p => p.ProductColor)
-            .ToListAsync();
-            var listProductDto = _mapper.Map<List<ProducGetListDto>>(query);
-            await Task.Delay(1000);
-            return Ok(listProductDto);
+            try
+            {
+                var totalProducts = await query.CountAsync();
+                await query.Include(p => p.Brand)
+                    .Include(p => p.NameTags)
+                    .ThenInclude(nt => nt.NameTag)
+                    .Include(p => p.ProductColor)
+                    .Where(p => p.Status == true).Skip(skip)
+                    .Take(take)
+                    .ToListAsync();
+
+                var productDtos = _mapper.Map<List<ProductGetListDto>>(query);
+                var hasMore = skip + take < totalProducts;
+                return Ok(new { data = productDtos, hasMore });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal Server Error");
+            }
         }
 
         [HttpGet("get-product/{id}")]
@@ -479,7 +481,10 @@ namespace WebIdentityApi.Controllers
             .Include(p => p.ProductColor)
             .ThenInclude(pc => pc.ProductColorSizes)
             .ThenInclude(pc => pc.Size)
-            .FirstOrDefaultAsync(p => p.ProductId == id);
+            .FirstOrDefaultAsync(p => p.ProductId == id && p.Status == true);
+
+            if (product == null) return NotFound();
+
             var productDto = _mapper.Map<ProductDto>(product);
 
             return Ok(productDto);
@@ -609,9 +614,7 @@ namespace WebIdentityApi.Controllers
             char lowerChar = lowerChars[random.Next(lowerChars.Length)];
             char specialChar = specialChars[random.Next(specialChars.Length)];
 
-            string numberString = new string(Enumerable.Repeat(digits, 3)
-                                                .Select(s => s[random.Next(s.Length)])
-                                                .ToArray());
+            string numberString = new string(Enumerable.Repeat(digits, 3).Select(s => s[random.Next(s.Length)]).ToArray());
 
             string result = upperChar.ToString() + lowerChar + specialChar + numberString;
             await Task.Delay(10);
@@ -637,7 +640,6 @@ namespace WebIdentityApi.Controllers
         {
             var roles = await _userManager.GetRolesAsync(user);
             bool isStaff = roles.Any(r => r == "Staff");
-
             return isStaff;
         }
 

@@ -14,7 +14,7 @@
                     "Air Force 1"
                 ]
             },
-            "imagePath": "wwwroot/images/products/dbe68b35-ba03-49a5-a6d3-56d0232242f9_.jpg;wwwroot/images/products/8f51ddd7-7208-422f-87b6-bd4642069b08_.jpg"
+            "imagePath": "wwwroot/images/products/dbe68b35-ba03-49a5-a6d3-56d0232242f9_.jpg"
         },
         {
             "$id": "4",
@@ -29,7 +29,7 @@
                     "Air Force 1"
                 ]
             },
-            "imagePath": "wwwroot/images/products/dbe68b35-ba03-49a5-a6d3-56d0232242f9_.jpg;wwwroot/images/products/8f51ddd7-7208-422f-87b6-bd4642069b08_.jpg"
+            "imagePath": "wwwroot/images/products/dbe68b35-ba03-49a5-a6d3-56d0232242f9_.jpg"
         }
     ]
 }

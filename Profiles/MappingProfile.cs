@@ -46,12 +46,12 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.SizeId, opt => opt.MapFrom(src => src.Size.SizeId));
 
 
-        CreateMap<Product, ProducGetListDto>()
+        CreateMap<Product, ProductGetListDto>()
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
             .ForMember(dest => dest.ProductDescription, opt => opt.MapFrom(src => src.Description))
             .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(nt => nt.NameTag.Tag)))
             .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand.BrandName))
-            .ForMember(dest => dest.ImagePath, opt => opt.MapFrom(src => src.ProductColor.Select(pc => pc .ImagePath).First()));
+            .ForMember(dest => dest.ImagePath, opt => opt.MapFrom(src => src.ProductColor.Select(pc => pc .ImagePath.Split(';', System.StringSplitOptions.RemoveEmptyEntries).First()).First()));
 
     }
 }
