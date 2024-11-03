@@ -3,7 +3,7 @@ using WebIdentityApi.DTOs.ProductColor;
 
 namespace WebIdentityApi.DTOs.Product
 {
-    public class ProductGetListDto
+    public class ListProductDto
     {
         public int ProductId { get; set; }
         public string ProductName { get; set; }

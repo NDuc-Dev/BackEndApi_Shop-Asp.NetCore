@@ -5,5 +5,6 @@ namespace WebIdentityApi.Interfaces
 {
     public interface IProductServices
     {
+        
     }
 }

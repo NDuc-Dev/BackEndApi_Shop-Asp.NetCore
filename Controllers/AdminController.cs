@@ -423,13 +423,12 @@ namespace WebIdentityApi.Controllers
 
         #region Product Manage Function
         [HttpGet("get-products")]
-        public async Task<IActionResult> GetProducts([FromQuery] ProductFilters filter, int skip, int take = 9)
+        public async Task<IActionResult> GetProducts([FromQuery] ProductFilters filter, int skip, int take)
         {
             if (skip < 0 || take <= 0)
             {
                 return BadRequest("Invalid skip or take value");
             }
-
             var query = _context.Products.AsQueryable();
 
             if (!string.IsNullOrEmpty(filter.Name))
@@ -459,7 +458,7 @@ namespace WebIdentityApi.Controllers
                     .Take(take)
                     .ToListAsync();
 
-                var productDtos = _mapper.Map<List<ProductGetListDto>>(query);
+                var productDtos = _mapper.Map<List<ListProductDto>>(query);
                 var hasMore = skip + take < totalProducts;
                 return Ok(new { data = productDtos, hasMore });
             }
