@@ -31,26 +31,26 @@ namespace WebIdentityApi.Controllers
     [ApiController]
     public class AdminController : ControllerBase
     {
-        private readonly JwtService _jwtService;
         private readonly UserManager<User> _userManager;
         private readonly EmailService _emailService;
         private IConfiguration _config;
         private ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly UserServices _userServices;
         public AdminController(
             UserManager<User> userManager,
-            JwtService jwtService,
             EmailService emailService,
             IConfiguration config,
             ApplicationDbContext context,
-            IMapper mapper)
+            IMapper mapper,
+            UserServices userServices)
         {
             _userManager = userManager;
-            _jwtService = jwtService;
             _emailService = emailService;
             _config = config;
             _context = context;
             _mapper = mapper;
+            _userServices = userServices;
         }
         #region Staff Manage Function
 
@@ -65,7 +65,7 @@ namespace WebIdentityApi.Controllers
                 Email = model.Email,
                 UserName = model.Email,
             };
-            var password = await GenerateDefaultPassword();
+            var password = await _userServices.GenerateDefaultPassword();
             var result = await _userManager.CreateAsync(staff, password);
             if (!result.Succeeded) return BadRequest(result.Errors);
             await _userManager.AddToRoleAsync(staff, "Staff");
@@ -154,7 +154,7 @@ namespace WebIdentityApi.Controllers
             if (user.EmailConfirmed == false) return BadRequest("Please confirm your email first");
             try
             {
-                if (await SendForgotPassword(user))
+                if (await _userServices.SendForgotPassword(user))
                 {
                     return Ok(new JsonResult(new { title = "Success", message = "Reset password successfully" }));
                 }
@@ -199,9 +199,8 @@ namespace WebIdentityApi.Controllers
                     if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
                     string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
                     string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
-                    var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-                    var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-                    var user = await _jwtService.GetUserInfoFromJwt(token);
+                    var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
+                    var user = await _userServices.GetUserInfoFromJwt(authorizationHeader);
                     if (user == null) return BadRequest("User not found!");
                     var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
                     if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
@@ -492,22 +491,22 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-product")]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto model)
         {
-            var authorizationHeader = Request.Headers["Authorization"].FirstOrDefault();
-            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-            var user = await _jwtService.GetUserInfoFromJwt(token);
+            var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
+            var user = await _userServices.GetUserInfoFromJwt(authorizationHeader);
             var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    var product = new Product
-                    {
-                        ProductName = model.ProductName,
-                        Description = model.ProductDescription,
-                        Brand = brand,
-                        CreatedByUser = user,
-                    };
-                    _context.Products.Add(product);
+                    var productMap = _mapper.Map<Product>(model);
+                    // var product = new Product
+                    // {
+                    //     ProductName = model.ProductName,
+                    //     Description = model.ProductDescription,
+                    //     Brand = brand,
+                    //     CreatedByUser = user,
+                    // };
+                    _context.Products.Add(productMap);
                     await _context.SaveChangesAsync();
                     if (model.NameTagId != null && model.NameTagId.Count > 0)
                     {
@@ -516,7 +515,7 @@ namespace WebIdentityApi.Controllers
                             var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
                             var productNameTag = new ProductNameTag
                             {
-                                Product = product,
+                                Product = productMap,
                                 NameTag = nameTag,
                             };
                             _context.ProductNameTags.Add(productNameTag);
@@ -541,7 +540,7 @@ namespace WebIdentityApi.Controllers
                         imagesPath = imagesPath.TrimEnd(';');
                         var productColor = new ProductColor
                         {
-                            Product = product,
+                            Product = productMap,
                             Color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId),
                             Price = variant.Price,
                             ImagePath = imagesPath
@@ -563,7 +562,7 @@ namespace WebIdentityApi.Controllers
                     }
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
+                    return CreatedAtAction("GetProductById", new { id = productMap.ProductId }, productMap);
                 }
                 catch (Exception ex)
                 {
@@ -606,41 +605,6 @@ namespace WebIdentityApi.Controllers
                 $"<br>{_config["Email:ApplicationName"]}";
 
             var emaiSend = new EmailSendDto(userToAdd.Email, "CONFIRM YOUR EMAIL", body);
-
-            return await _emailService.SendEmail(emaiSend);
-        }
-
-        private async Task<string> GenerateDefaultPassword()
-        {
-            Random random = new Random();
-
-            const string upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const string lowerChars = "abcdefghijklmnopqrstuvwxyz";
-            const string specialChars = "!@#$%^&*()";
-            const string digits = "0123456789";
-
-            char upperChar = upperChars[random.Next(upperChars.Length)];
-            char lowerChar = lowerChars[random.Next(lowerChars.Length)];
-            char specialChar = specialChars[random.Next(specialChars.Length)];
-
-            string numberString = new string(Enumerable.Repeat(digits, 3).Select(s => s[random.Next(s.Length)]).ToArray());
-
-            string result = upperChar.ToString() + lowerChar + specialChar + numberString;
-            await Task.Delay(10);
-            return new string(result.ToCharArray().OrderBy(c => random.Next()).ToArray());
-        }
-
-        private async Task<bool> SendForgotPassword(User user)
-        {
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-            var url = $"{_config["JWT:ClientUrl"]}/{_config["Email:ResetPasswordPath"]}?token={token}&email={user.Email}";
-            var body = $"<p>Hello: {user.FullName}</p> " +
-                $"<p>Please click <a href =\"{url}\">here</a> to reset your password</p>" +
-                "<p>Thank you</p>" +
-                $"<br>{_config["Email:ApplicationName"]}";
-
-            var emaiSend = new EmailSendDto(user.Email, "RESET PASSWORD", body);
 
             return await _emailService.SendEmail(emaiSend);
         }

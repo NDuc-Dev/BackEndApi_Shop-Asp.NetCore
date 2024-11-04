@@ -1,5 +1,7 @@
 using System.Linq;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.NameTag;
 using WebIdentityApi.DTOs.Product;
 using WebIdentityApi.DTOs.ProductColor;
@@ -8,6 +10,11 @@ using WebIdentityApi.Models;
 
 public class MappingProfile : Profile
 {
+    private readonly ApplicationDbContext _context;
+    public MappingProfile(ApplicationDbContext context)
+    {
+        _context = context;
+    }
     public MappingProfile()
     {
 
@@ -46,12 +53,20 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.SizeId, opt => opt.MapFrom(src => src.Size.SizeId));
 
 
-        CreateMap<Product, ProductGetListDto>()
+        CreateMap<Product, ListProductDto>()
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
             .ForMember(dest => dest.ProductDescription, opt => opt.MapFrom(src => src.Description))
             .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(nt => nt.NameTag.Tag)))
             .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand.BrandName))
-            .ForMember(dest => dest.ImagePath, opt => opt.MapFrom(src => src.ProductColor.Select(pc => pc .ImagePath.Split(';', System.StringSplitOptions.RemoveEmptyEntries).First()).First()));
+            .ForMember(dest => dest.ImagePath, opt => opt.MapFrom(src => src.ProductColor.Select(pc => pc.ImagePath.Split(';', System.StringSplitOptions.RemoveEmptyEntries).First()).First()));
+
+        CreateMap<CreateProductDto, Product>()
+            .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
+            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.ProductDescription))
+            .AfterMap(async (src, dest) =>
+                    {
+                        dest.Brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == src.BrandId);
+                    });
 
     }
 }

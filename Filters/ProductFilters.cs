@@ -7,6 +7,7 @@ namespace WebIdentityApi.Filters
         public int[] Size { get; set; }
         public int[] Color { get; set; }
         public string CreatedByUser { get; set; }
+        public bool Status { get; set; } = true;
     }
 
 }

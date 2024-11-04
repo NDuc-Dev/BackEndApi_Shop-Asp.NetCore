@@ -43,31 +43,7 @@ namespace WebIdentityApi.Services
             return tokenHandler.WriteToken(jwt);
         }
 
-        public async Task<User> GetUserInfoFromJwt(string token)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Key"])),
-                ValidIssuer = _config["JWT:Issuer"],
-                ValidateIssuer = true,
-                ValidateAudience = false
-            };
-
-            try
-            {
-                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-                await Task.Delay(10);
-                return user;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
+        
 
         #region Private Helper Method
         private List<Claim> GetClaim(User user, IList<string> userRole)
