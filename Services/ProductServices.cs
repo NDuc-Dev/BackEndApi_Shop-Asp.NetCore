@@ -39,5 +39,32 @@ namespace WebIdentityApi.Services
             await _context.SaveChangesAsync();
             return productNameTag;
         }
+
+        public async Task<ProductColor> CreateProductColor(Product product, Color color, decimal price, string imagePath)
+        {
+            var productColor = new ProductColor
+            {
+                Product = product,
+                Color = color,
+                Price = price,
+                ImagePath = imagePath
+            };
+            _context.ProductColors.Add(productColor);
+            await _context.SaveChangesAsync();
+            return productColor;
+        }
+
+        public async Task<ProductColorSize> CreateProductColorSize(ProductColor productColor, Size size, int quantity)
+        {
+            var productColorSize = new ProductColorSize
+            {
+                ProductColor = productColor,
+                Size = size,
+                Quantity = quantity
+            };
+            _context.ProductColorSizes.Add(productColorSize);
+            await _context.SaveChangesAsync();
+            return productColorSize;
+        }
     }
 }

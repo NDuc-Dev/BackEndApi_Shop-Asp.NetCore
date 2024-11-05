@@ -500,6 +500,7 @@ namespace WebIdentityApi.Controllers
             var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
             var user = await _userServices.GetUserInfoFromJwt(authorizationHeader);
             var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
+            if (brand == null) throw new Exception("Brand does not exits, please try again");
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
@@ -510,10 +511,10 @@ namespace WebIdentityApi.Controllers
                         foreach (var tagId in model.NameTagId)
                         {
                             var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
+                            if (nameTag == null) throw new Exception("Name Tag does not exits, please try again");
                             await _productServices.CreateProductNameTag(product, nameTag);
                         }
                     }
-
                     foreach (var variant in model.Variants)
                     {
                         var imagesPath = string.Empty;
@@ -523,29 +524,17 @@ namespace WebIdentityApi.Controllers
                             imagesPath += $"{filePath};";
                         }
                         imagesPath = imagesPath.TrimEnd(';');
-                        var productColor = new ProductColor
-                        {
-                            Product = product,
-                            Color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId),
-                            Price = variant.Price,
-                            ImagePath = imagesPath
-                        };
-
-                        _context.ProductColors.Add(productColor);
-                        await _context.SaveChangesAsync();
+                        var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId);
+                        if (color == null) throw new Exception("Color does not exits, please try again");
+                        var productColor = await _productServices.CreateProductColor(product, color, variant.Price, imagesPath);
 
                         foreach (var size in variant.ProductColorSize)
                         {
-                            var productColorSize = new ProductColorSize
-                            {
-                                ProductColor = productColor,
-                                Size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == size.SizeId),
-                                Quantity = size.Quantity
-                            };
-                            _context.ProductColorSizes.Add(productColorSize);
+                            var sizeModel = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == size.SizeId);
+                            if (sizeModel == null) throw new Exception("Size does not exits, please try again");
+                            var productColorSize = await _productServices.CreateProductColorSize(productColor, sizeModel, size.Quantity);
                         }
                     }
-                    await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
                 }
@@ -589,9 +578,9 @@ namespace WebIdentityApi.Controllers
                 "<p>Thank you, Welcome to My shop</p>" +
                 $"<br>{_config["Email:ApplicationName"]}";
 
-            var emaiSend = new EmailSendDto(userToAdd.Email, "CONFIRM YOUR EMAIL", body);
+            var emailSend = new EmailSendDto(userToAdd.Email, "CONFIRM YOUR EMAIL", body);
 
-            return await _emailService.SendEmail(emaiSend);
+            return await _emailService.SendEmail(emailSend);
         }
 
         private async Task<bool> CheckStaffRoleAsync(User user)
