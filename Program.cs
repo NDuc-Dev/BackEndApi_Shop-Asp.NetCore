@@ -70,6 +70,8 @@ namespace WebIdentityApi
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<EmailService>();
             builder.Services.AddScoped<UserServices>();
+            builder.Services.AddScoped<ProductServices>();
+            builder.Services.AddScoped<ImageServices>();
 
             builder.Services.AddIdentityCore<User>(options =>
             {

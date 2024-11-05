@@ -37,13 +37,17 @@ namespace WebIdentityApi.Controllers
         private ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly UserServices _userServices;
+        private readonly ProductServices _productServices;
+        private readonly ImageServices _imageServices;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
             IConfiguration config,
             ApplicationDbContext context,
             IMapper mapper,
-            UserServices userServices)
+            UserServices userServices,
+            ProductServices productServices,
+            ImageServices imageServices)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -51,6 +55,8 @@ namespace WebIdentityApi.Controllers
             _context = context;
             _mapper = mapper;
             _userServices = userServices;
+            _productServices = productServices;
+            _imageServices = imageServices;
         }
         #region Staff Manage Function
 
@@ -498,28 +504,13 @@ namespace WebIdentityApi.Controllers
             {
                 try
                 {
-                    var productMap = _mapper.Map<Product>(model);
-                    // var product = new Product
-                    // {
-                    //     ProductName = model.ProductName,
-                    //     Description = model.ProductDescription,
-                    //     Brand = brand,
-                    //     CreatedByUser = user,
-                    // };
-                    _context.Products.Add(productMap);
-                    await _context.SaveChangesAsync();
+                    var product = await _productServices.CreateProduct(model, brand);
                     if (model.NameTagId != null && model.NameTagId.Count > 0)
                     {
                         foreach (var tagId in model.NameTagId)
                         {
                             var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
-                            var productNameTag = new ProductNameTag
-                            {
-                                Product = productMap,
-                                NameTag = nameTag,
-                            };
-                            _context.ProductNameTags.Add(productNameTag);
-                            await _context.SaveChangesAsync();
+                            await _productServices.CreateProductNameTag(product, nameTag);
                         }
                     }
 
@@ -528,19 +519,13 @@ namespace WebIdentityApi.Controllers
                         var imagesPath = string.Empty;
                         foreach (var image in variant.images)
                         {
-                            byte[] imageBytes = Convert.FromBase64String(image);
-                            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ".jpg";
-                            var filePath = Path.Combine("wwwroot/images/products", uniqueFileName);
-                            using (var img = Image.Load(imageBytes))
-                            {
-                                img.Save(filePath);
-                            }
+                            var filePath = _imageServices.CreateImgPath("products", image);
                             imagesPath += $"{filePath};";
                         }
                         imagesPath = imagesPath.TrimEnd(';');
                         var productColor = new ProductColor
                         {
-                            Product = productMap,
+                            Product = product,
                             Color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId),
                             Price = variant.Price,
                             ImagePath = imagesPath
@@ -562,7 +547,7 @@ namespace WebIdentityApi.Controllers
                     }
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    return CreatedAtAction("GetProductById", new { id = productMap.ProductId }, productMap);
+                    return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
                 }
                 catch (Exception ex)
                 {

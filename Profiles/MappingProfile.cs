@@ -63,10 +63,6 @@ public class MappingProfile : Profile
         CreateMap<CreateProductDto, Product>()
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.ProductDescription))
-            .AfterMap(async (src, dest) =>
-                    {
-                        dest.Brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == src.BrandId);
-                    });
-
+            .ForMember(dest => dest.Brand, opt => opt.Ignore());
     }
 }
