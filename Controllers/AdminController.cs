@@ -202,14 +202,14 @@ namespace WebIdentityApi.Controllers
                 try
                 {
                     var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
-                    if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
+                    if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) throw new Exception("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
                     string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
                     string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
                     var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
                     var user = await _userServices.GetUserInfoFromJwt(authorizationHeader);
-                    if (user == null) return BadRequest("User not found!");
+                    if (user == null) throw new Exception("User not found!");
                     var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
-                    if (exitsName != null) return BadRequest(new { error = $"Brand {model.BrandName} has been exist, please use another name" });
+                    if (exitsName != null) throw new Exception($"Brand {model.BrandName} has been exist, please use another name");
                     using (var image = Image.Load(model.Image.OpenReadStream()))
                     {
                         if (!Directory.Exists(Path.GetDirectoryName(filePath)))
