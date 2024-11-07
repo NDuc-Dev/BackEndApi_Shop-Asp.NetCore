@@ -1,10 +1,14 @@
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+using WebIdentityApi.DTOs.Product;
+using WebIdentityApi.Models;
 
 namespace WebIdentityApi.Interfaces
 {
     public interface IProductServices
     {
-        
+        Task<Product> CreateProductAsync(CreateProductDto model, Brand brand);
+        Task<ProductNameTag> CreateProductNameTagAsync(Product product, NameTag nameTag);
+        Task<ProductColor> CreateProductColorAsync(Product product, Color color, decimal price, string imagePath);
+        Task<ProductColorSize> CreateProductColorSizeAsync(ProductColor productColor, Size size, int quantity);
     }
 }

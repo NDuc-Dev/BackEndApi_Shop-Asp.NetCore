@@ -28,7 +28,7 @@ namespace WebIdentityApi.Services
             _userManager = userManager;
             _emailServices = emailService;
         }
-        public async Task<User> GetUserInfoFromJwt(string authorizationHeader)
+        public async Task<User> GetUserInfoFromJwtAsync(string authorizationHeader)
         {
             var token = authorizationHeader.Substring("Bearer ".Length).Trim();
             var tokenHandler = new JwtSecurityTokenHandler();

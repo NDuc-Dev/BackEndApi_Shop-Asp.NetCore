@@ -1,16 +1,13 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.IdentityModel.Tokens;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Product;
-using WebIdentityApi.DTOs.ProductColor;
+using WebIdentityApi.Interfaces;
 using WebIdentityApi.Models;
 
 namespace WebIdentityApi.Services
 {
-    public class ProductServices
+    public class ProductServices : IProductServices
     {
         private readonly IMapper _mapper;
         private readonly ApplicationDbContext _context;
@@ -19,7 +16,7 @@ namespace WebIdentityApi.Services
             _mapper = mapper;
             _context = context;
         }
-        public async Task<Product> CreateProduct(CreateProductDto model, Brand brand)
+        public async Task<Product> CreateProductAsync(CreateProductDto model, Brand brand)
         {
             var productMap = _mapper.Map<Product>(model);
             productMap.Brand = brand;
@@ -28,7 +25,7 @@ namespace WebIdentityApi.Services
             return productMap;
         }
 
-        public async Task<ProductNameTag> CreateProductNameTag(Product product, NameTag nameTag)
+        public async Task<ProductNameTag> CreateProductNameTagAsync(Product product, NameTag nameTag)
         {
             var productNameTag = new ProductNameTag
             {
@@ -40,7 +37,7 @@ namespace WebIdentityApi.Services
             return productNameTag;
         }
 
-        public async Task<ProductColor> CreateProductColor(Product product, Color color, decimal price, string imagePath)
+        public async Task<ProductColor> CreateProductColorAsync(Product product, Color color, decimal price, string imagePath)
         {
             var productColor = new ProductColor
             {
@@ -54,7 +51,7 @@ namespace WebIdentityApi.Services
             return productColor;
         }
 
-        public async Task<ProductColorSize> CreateProductColorSize(ProductColor productColor, Size size, int quantity)
+        public async Task<ProductColorSize> CreateProductColorSizeAsync(ProductColor productColor, Size size, int quantity)
         {
             var productColorSize = new ProductColorSize
             {

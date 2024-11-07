@@ -15,6 +15,7 @@ using WebIdentityApi.Services;
 using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
+using WebIdentityApi.Interfaces;
 
 namespace WebIdentityApi
 {
@@ -70,8 +71,9 @@ namespace WebIdentityApi
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<EmailService>();
             builder.Services.AddScoped<UserServices>();
-            builder.Services.AddScoped<ProductServices>();
+            builder.Services.AddScoped<IProductServices, ProductServices>();
             builder.Services.AddScoped<ImageServices>();
+            builder.Services.AddScoped<BrandServices>();
 
             builder.Services.AddIdentityCore<User>(options =>
             {

@@ -7,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,22 +22,24 @@ using SixLabors.ImageSharp;
 using WebIdentityApi.DTOs.NameTag;
 using AutoMapper;
 using WebIdentityApi.Filters;
+using WebIdentityApi.Interfaces;
 
 namespace WebIdentityApi.Controllers
 {
-    [Authorize(Policy = "OnlyAdminRole")]
+    // [Authorize(Policy = "OnlyAdminRole")]
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
         private readonly EmailService _emailService;
-        private IConfiguration _config;
-        private ApplicationDbContext _context;
+        private readonly IConfiguration _config;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly UserServices _userServices;
-        private readonly ProductServices _productServices;
+        private readonly IProductServices _productServices;
         private readonly ImageServices _imageServices;
+        private readonly BrandServices _brandServices;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -46,8 +47,9 @@ namespace WebIdentityApi.Controllers
             ApplicationDbContext context,
             IMapper mapper,
             UserServices userServices,
-            ProductServices productServices,
-            ImageServices imageServices)
+            IProductServices productServices,
+            ImageServices imageServices,
+            BrandServices brandServices)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -57,6 +59,7 @@ namespace WebIdentityApi.Controllers
             _userServices = userServices;
             _productServices = productServices;
             _imageServices = imageServices;
+            _brandServices = brandServices;
         }
         #region Staff Manage Function
 
@@ -176,18 +179,35 @@ namespace WebIdentityApi.Controllers
 
         #region Brand Manage Function
         [HttpGet("get-brands")]
-        public async Task<ActionResult<IEnumerable<Brand>>> GetAllBrand()
+        public async Task<IActionResult> GetAllBrand()
         {
-            var brands = await _context.Brands.ToListAsync();
-            return Ok(brands);
+            try
+            {
+                var brands = await _brandServices.GetBrands();
+                if (brands == null) throw new Exception("Not have brand in list");
+                var brandDto = _mapper.Map<List<BrandDto>>(brands);
+                return Ok(brandDto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.ToString());
+            }
         }
 
         [HttpGet("get-brand/{id}")]
-        public async Task<ActionResult<BrandDto>> GetBrandById(int id)
+        public async Task<IActionResult> GetBrandById(int id)
         {
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
-            if (brand == null) return NotFound("Brand not found");
-            return Ok(brand);
+            try
+            {
+                var brand = await _brandServices.GetBrandById(id);
+                if (brand == null) throw new Exception("Brand not found");
+                var listBrandDto = _mapper.Map<BrandDto>(brand);
+                return Ok(listBrandDto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.ToString());
+            }
         }
 
         [HttpPost("create-brand")]
@@ -201,32 +221,13 @@ namespace WebIdentityApi.Controllers
             {
                 try
                 {
-                    var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
-                    if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) throw new Exception("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
-                    string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
+                    string filePath = await _imageServices.CreatePathForImg("brands", model.Image);
                     var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
-                    var user = await _userServices.GetUserInfoFromJwt(authorizationHeader);
+                    var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
                     if (user == null) throw new Exception("User not found!");
                     var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
                     if (exitsName != null) throw new Exception($"Brand {model.BrandName} has been exist, please use another name");
-                    using (var image = Image.Load(model.Image.OpenReadStream()))
-                    {
-                        if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-                        {
-                            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-                        }
-                        await image.SaveAsJpegAsync(filePath);
-                    }
-                    var brand = new Brand
-                    {
-                        BrandName = model.BrandName,
-                        Descriptions = model.Descriptions,
-                        CreatedByUser = user,
-                        ImagePath = uniqueFileName
-                    };
-                    _context.Brands.Add(brand);
-                    await _context.SaveChangesAsync();
+                    var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
                     await transaction.CommitAsync();
                     return CreatedAtAction(
                     nameof(GetBrandById),
@@ -251,25 +252,13 @@ namespace WebIdentityApi.Controllers
             string fileImagePath = null;
             if (model.ImageChanged == true)
             {
-                var fileExtension = Path.GetExtension(model.Image.FileName).ToLower();
-                if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension)) return BadRequest("Invalid image format. Only JPG, JPEG, and PNG files are allowed.");
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Image.FileName;
-                string filePath = Path.Combine("wwwroot/images/brands", uniqueFileName);
-                fileImagePath = filePath;
-                using (var image = Image.Load(model.Image.OpenReadStream()))
-                {
-                    if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-                    {
-                        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-                    }
-                    await image.SaveAsJpegAsync(filePath);
-                }
+                fileImagePath = await _imageServices.CreatePathForImg("brands", model.Image);
             }
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
 
                 var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
-                if (exitsName != null) return BadRequest($"Brand {model.BrandName} has been exist, please try with another name");
+                if (exitsName != null) throw new Exception($"Brand {model.BrandName} has been exist, please try with another name");
                 try
                 {
                     brand.BrandName = model.BrandName;
@@ -486,11 +475,8 @@ namespace WebIdentityApi.Controllers
             .ThenInclude(pc => pc.ProductColorSizes)
             .ThenInclude(pc => pc.Size)
             .FirstOrDefaultAsync(p => p.ProductId == id && p.Status == true);
-
             if (product == null) return NotFound();
-
             var productDto = _mapper.Map<ProductDto>(product);
-
             return Ok(productDto);
         }
 
@@ -498,21 +484,21 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto model)
         {
             var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
-            var user = await _userServices.GetUserInfoFromJwt(authorizationHeader);
+            var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
             var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
             if (brand == null) throw new Exception("Brand does not exits, please try again");
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    var product = await _productServices.CreateProduct(model, brand);
+                    var product = await _productServices.CreateProductAsync(model, brand);
                     if (model.NameTagId != null && model.NameTagId.Count > 0)
                     {
                         foreach (var tagId in model.NameTagId)
                         {
                             var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
                             if (nameTag == null) throw new Exception("Name Tag does not exits, please try again");
-                            await _productServices.CreateProductNameTag(product, nameTag);
+                            await _productServices.CreateProductNameTagAsync(product, nameTag);
                         }
                     }
                     foreach (var variant in model.Variants)
@@ -520,19 +506,19 @@ namespace WebIdentityApi.Controllers
                         var imagesPath = string.Empty;
                         foreach (var image in variant.images)
                         {
-                            var filePath = _imageServices.CreateImgPath("products", image);
+                            var filePath = _imageServices.CreatePathForBase64Img("products", image);
                             imagesPath += $"{filePath};";
                         }
                         imagesPath = imagesPath.TrimEnd(';');
                         var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId);
                         if (color == null) throw new Exception("Color does not exits, please try again");
-                        var productColor = await _productServices.CreateProductColor(product, color, variant.Price, imagesPath);
+                        var productColor = await _productServices.CreateProductColorAsync(product, color, variant.Price, imagesPath);
 
                         foreach (var size in variant.ProductColorSize)
                         {
                             var sizeModel = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == size.SizeId);
                             if (sizeModel == null) throw new Exception("Size does not exits, please try again");
-                            var productColorSize = await _productServices.CreateProductColorSize(productColor, sizeModel, size.Quantity);
+                            var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, sizeModel, size.Quantity);
                         }
                     }
                     await transaction.CommitAsync();
@@ -543,9 +529,7 @@ namespace WebIdentityApi.Controllers
                     await transaction.RollbackAsync();
                     return BadRequest(ex.ToString());
                 }
-
             }
-
         }
 
         [HttpPost("change-status/{id}")]
@@ -577,9 +561,7 @@ namespace WebIdentityApi.Controllers
                 $"<p>Your default password :{password} </p>" +
                 "<p>Thank you, Welcome to My shop</p>" +
                 $"<br>{_config["Email:ApplicationName"]}";
-
             var emailSend = new EmailSendDto(userToAdd.Email, "CONFIRM YOUR EMAIL", body);
-
             return await _emailService.SendEmail(emailSend);
         }
 
@@ -589,7 +571,6 @@ namespace WebIdentityApi.Controllers
             bool isStaff = roles.Any(r => r == "Staff");
             return isStaff;
         }
-
         #endregion
     }
 }
