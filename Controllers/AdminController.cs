@@ -40,6 +40,7 @@ namespace WebIdentityApi.Controllers
         private readonly IProductServices _productServices;
         private readonly ImageServices _imageServices;
         private readonly BrandServices _brandServices;
+        private readonly StaffServices _staffServices;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -49,7 +50,8 @@ namespace WebIdentityApi.Controllers
             UserServices userServices,
             IProductServices productServices,
             ImageServices imageServices,
-            BrandServices brandServices)
+            BrandServices brandServices,
+            StaffServices staffServices)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -60,6 +62,7 @@ namespace WebIdentityApi.Controllers
             _productServices = productServices;
             _imageServices = imageServices;
             _brandServices = brandServices;
+            _staffServices = staffServices;
         }
         #region Staff Manage Function
 
@@ -68,15 +71,8 @@ namespace WebIdentityApi.Controllers
         {
             if (await CheckEmailExistAsync(model.Email)) return BadRequest("Email is already exist, please try with another email !");
 
-            var staff = new User
-            {
-                FullName = model.FullName,
-                Email = model.Email,
-                UserName = model.Email,
-            };
             var password = await _userServices.GenerateDefaultPassword();
-            var result = await _userManager.CreateAsync(staff, password);
-            if (!result.Succeeded) return BadRequest(result.Errors);
+            var staff = await _staffServices.CreateStaff(model, password);
             await _userManager.AddToRoleAsync(staff, "Staff");
             try
             {

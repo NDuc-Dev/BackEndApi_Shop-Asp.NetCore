@@ -21,7 +21,7 @@ namespace WebIdentityApi.Services
         private readonly UserManager<User> _userManager;
         private readonly EmailService _emailServices;
 
-        public UserServices(JwtService jwtService, IConfiguration config, ApplicationDbContext context, UserManager<User> userManager, EmailService emailService)
+        public UserServices(IConfiguration config, ApplicationDbContext context, UserManager<User> userManager, EmailService emailService)
         {
             _config = config;
             _context = context;

@@ -74,6 +74,7 @@ namespace WebIdentityApi
             builder.Services.AddScoped<IProductServices, ProductServices>();
             builder.Services.AddScoped<ImageServices>();
             builder.Services.AddScoped<BrandServices>();
+            builder.Services.AddScoped<StaffServices>();
 
             builder.Services.AddIdentityCore<User>(options =>
             {
