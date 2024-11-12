@@ -16,10 +16,11 @@ namespace WebIdentityApi.Services
             _mapper = mapper;
             _context = context;
         }
-        public async Task<Product> CreateProductAsync(CreateProductDto model, Brand brand)
+        public async Task<Product> CreateProductAsync(CreateProductDto model, Brand brand, User user)
         {
             var productMap = _mapper.Map<Product>(model);
             productMap.Brand = brand;
+            productMap.CreatedByUser = user;
             _context.Products.Add(productMap);
             await _context.SaveChangesAsync();
             return productMap;

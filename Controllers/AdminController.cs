@@ -23,10 +23,12 @@ using WebIdentityApi.DTOs.NameTag;
 using AutoMapper;
 using WebIdentityApi.Filters;
 using WebIdentityApi.Interfaces;
+using Microsoft.AspNetCore.Http;
+using WebIdentityApi.Helpers;
 
 namespace WebIdentityApi.Controllers
 {
-    // [Authorize(Policy = "OnlyAdminRole")]
+    [Authorize(Policy = "OnlyAdminRole")]
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
@@ -479,53 +481,117 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-product")]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto model)
         {
-            var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
-            var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
-            if (brand == null) throw new Exception("Brand does not exits, please try again");
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            if (ModelState.IsValid)
             {
-                try
+                string message = "";
+                var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
+                var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
+                var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
+                var dupplicateName = await _context.Products.FirstOrDefaultAsync(p => p.ProductName.ToLower().Contains(model.ProductName.ToLower()));
+                if (dupplicateName != null)
                 {
-                    var product = await _productServices.CreateProductAsync(model, brand);
-                    if (model.NameTagId != null && model.NameTagId.Count > 0)
+                    message = $"Product name {model.ProductName} has been exist, please try with another name";
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
                     {
-                        foreach (var tagId in model.NameTagId)
+                        Success = false,
+                        Message = message,
+                        Error = new ErrorView
                         {
-                            var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
-                            if (nameTag == null) throw new Exception("Name Tag does not exits, please try again");
-                            await _productServices.CreateProductNameTagAsync(product, nameTag);
+                            Code = "DUPPLICATE_NAME",
+                            Message = message
                         }
-                    }
-                    foreach (var variant in model.Variants)
-                    {
-                        var imagesPath = string.Empty;
-                        foreach (var image in variant.images)
-                        {
-                            var filePath = _imageServices.CreatePathForBase64Img("products", image);
-                            imagesPath += $"{filePath};";
-                        }
-                        imagesPath = imagesPath.TrimEnd(';');
-                        var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId);
-                        if (color == null) throw new Exception("Color does not exits, please try again");
-                        var productColor = await _productServices.CreateProductColorAsync(product, color, variant.Price, imagesPath);
-
-                        foreach (var size in variant.ProductColorSize)
-                        {
-                            var sizeModel = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == size.SizeId);
-                            if (sizeModel == null) throw new Exception("Size does not exits, please try again");
-                            var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, sizeModel, size.Quantity);
-                        }
-                    }
-                    await transaction.CommitAsync();
-                    return CreatedAtAction("GetProductById", new { id = product.ProductId }, product);
+                    });
                 }
-                catch (Exception ex)
+                if (brand == null)
                 {
-                    await transaction.RollbackAsync();
-                    return BadRequest(ex.ToString());
+                    message = "Brand does not exist, please try again";
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                    {
+                        Success = false,
+                        Message = message,
+                        Error = new ErrorView
+                        {
+                            Code = "INVALID_BRAND",
+                            Message = message
+                        }
+                    });
+                };
+                using (var transaction = await _context.Database.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        var product = await _productServices.CreateProductAsync(model, brand, user);
+                        if (model.NameTagId != null && model.NameTagId.Count > 0)
+                        {
+                            foreach (var tagId in model.NameTagId)
+                            {
+                                var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
+                                if (nameTag == null)
+                                {
+                                    await transaction.RollbackAsync();
+                                    message = "Inavalid name tag";
+                                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                                    {
+                                        Success = false,
+                                        Message = message,
+                                        Error = new ErrorView
+                                        {
+                                            Message = message,
+                                            Code = "INVALID_TAG"
+                                        }
+                                    });
+                                }
+
+                                await _productServices.CreateProductNameTagAsync(product, nameTag);
+                            }
+                        }
+                        foreach (var variant in model.Variants)
+                        {
+                            var imagesPath = string.Empty;
+                            foreach (var image in variant.images)
+                            {
+                                var filePath = _imageServices.CreatePathForBase64Img("products", image);
+                                imagesPath += $"{filePath};";
+                            }
+                            imagesPath = imagesPath.TrimEnd(';');
+                            var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId);
+                            if (color == null) throw new Exception("Color does not exits, please try again");
+                            var productColor = await _productServices.CreateProductColorAsync(product, color, variant.Price, imagesPath);
+
+                            foreach (var size in variant.ProductColorSize)
+                            {
+                                var sizeModel = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == size.SizeId);
+                                if (sizeModel == null) throw new Exception("Size does not exits, please try again");
+                                var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, sizeModel, size.Quantity);
+                            }
+                        }
+                        await transaction.CommitAsync();
+                        var response = new ResponseView<Product>
+                        {
+                            Success = true,
+                            Message = "Product Created Successfully",
+                            Data = product
+
+                        };
+                        return Ok(response);
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        return BadRequest(ex.ToString());
+                    }
                 }
             }
+            return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+            {
+                Success = false,
+                Message = "Invalid input",
+                Error = new ErrorView
+                {
+                    Code = "INVALID_INPUT",
+                    Message = ModelStateHelper.GetErrors(ModelState)
+                }
+            });
         }
 
         [HttpPost("change-status/{id}")]
