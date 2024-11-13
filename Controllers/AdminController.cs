@@ -25,10 +25,12 @@ using WebIdentityApi.Filters;
 using WebIdentityApi.Interfaces;
 using Microsoft.AspNetCore.Http;
 using WebIdentityApi.Helpers;
+using WebIdentityApi.Extensions;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace WebIdentityApi.Controllers
 {
-    [Authorize(Policy = "OnlyAdminRole")]
+    // [Authorize(Policy = "OnlyAdminRole")]
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
@@ -71,7 +73,22 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-staff-account")]
         public async Task<ActionResult> createStaff(CreateStaffDto model)
         {
-            if (await CheckEmailExistAsync(model.Email)) return BadRequest("Email is already exist, please try with another email !");
+            string message = "";
+            if (await CheckEmailExistAsync(model.Email))
+            {
+                message = "Email has been exist, please try with another email";
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<User>
+                {
+                    Success = false,
+                    Message = message,
+                    Error = new ErrorView
+                    {
+                        Code = "INVALID_EMAIL",
+                        Message = message
+                    }
+
+                });
+            }
 
             var password = await _userServices.GenerateDefaultPassword();
             var staff = await _staffServices.CreateStaff(model, password);
@@ -486,9 +503,7 @@ namespace WebIdentityApi.Controllers
                 string message = "";
                 var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
                 var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
-                var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == model.BrandId);
-                var dupplicateName = await _context.Products.FirstOrDefaultAsync(p => p.ProductName.ToLower().Contains(model.ProductName.ToLower()));
-                if (dupplicateName != null)
+                if (await _context.IsExistsAsync<Product>("ProductName", model.ProductName))
                 {
                     message = $"Product name {model.ProductName} has been exist, please try with another name";
                     return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
@@ -502,7 +517,7 @@ namespace WebIdentityApi.Controllers
                         }
                     });
                 }
-                if (brand == null)
+                if (!await _context.IsExistsAsync<Brand>("BrandId", model.BrandId))
                 {
                     message = "Brand does not exist, please try again";
                     return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
@@ -511,7 +526,7 @@ namespace WebIdentityApi.Controllers
                         Message = message,
                         Error = new ErrorView
                         {
-                            Code = "INVALID_BRAND",
+                            Code = "INVALID_DATA",
                             Message = message
                         }
                     });
@@ -520,13 +535,12 @@ namespace WebIdentityApi.Controllers
                 {
                     try
                     {
-                        var product = await _productServices.CreateProductAsync(model, brand, user);
+                        var product = await _productServices.CreateProductAsync(model, model.BrandId, user);
                         if (model.NameTagId != null && model.NameTagId.Count > 0)
                         {
                             foreach (var tagId in model.NameTagId)
                             {
-                                var nameTag = await _context.NameTags.FirstOrDefaultAsync(b => b.NameTagId == tagId);
-                                if (nameTag == null)
+                                if (!await _context.IsExistsAsync<NameTag>("NameTagId", tagId))
                                 {
                                     await transaction.RollbackAsync();
                                     message = "Inavalid name tag";
@@ -537,12 +551,11 @@ namespace WebIdentityApi.Controllers
                                         Error = new ErrorView
                                         {
                                             Message = message,
-                                            Code = "INVALID_TAG"
+                                            Code = "INVALID_DATA"
                                         }
                                     });
                                 }
-
-                                await _productServices.CreateProductNameTagAsync(product, nameTag);
+                                await _productServices.CreateProductNameTagAsync(product, tagId);
                             }
                         }
                         foreach (var variant in model.Variants)
@@ -554,15 +567,41 @@ namespace WebIdentityApi.Controllers
                                 imagesPath += $"{filePath};";
                             }
                             imagesPath = imagesPath.TrimEnd(';');
-                            var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == variant.ColorId);
-                            if (color == null) throw new Exception("Color does not exits, please try again");
-                            var productColor = await _productServices.CreateProductColorAsync(product, color, variant.Price, imagesPath);
+                            if (!await _context.IsExistsAsync<Models.Color>("ColorId", variant.ColorId))
+                            {
+                                await transaction.RollbackAsync();
+                                message = "Inavalid color";
+                                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                                {
+                                    Success = false,
+                                    Message = message,
+                                    Error = new ErrorView
+                                    {
+                                        Message = message,
+                                        Code = "INVALID_DATA"
+                                    }
+                                });
+                            };
+                            var productColor = await _productServices.CreateProductColorAsync(product, variant.ColorId, variant.Price, imagesPath);
 
                             foreach (var size in variant.ProductColorSize)
                             {
-                                var sizeModel = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == size.SizeId);
-                                if (sizeModel == null) throw new Exception("Size does not exits, please try again");
-                                var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, sizeModel, size.Quantity);
+                                if (!await _context.IsExistsAsync<Models.Size>("SizeId", size.SizeId))
+                                {
+                                    await transaction.RollbackAsync();
+                                    message = "Inavalid size";
+                                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                                    {
+                                        Success = false,
+                                        Message = message,
+                                        Error = new ErrorView
+                                        {
+                                            Message = message,
+                                            Code = "INVALID_DATA"
+                                        }
+                                    });
+                                }
+                                var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, size.SizeId, size.Quantity);
                             }
                         }
                         await transaction.CommitAsync();
@@ -578,7 +617,18 @@ namespace WebIdentityApi.Controllers
                     catch (Exception ex)
                     {
                         await transaction.RollbackAsync();
-                        return BadRequest(ex.ToString());
+                        message = $"An error occurred while adding the product- " + ex.Message;
+
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView<Product>
+                        {
+                            Success = false,
+                            Message = message,
+                            Error = new ErrorView
+                            {
+                                Code = "SERVER_ERROR",
+                                Message = message
+                            }
+                        });
                     }
                 }
             }
@@ -588,7 +638,7 @@ namespace WebIdentityApi.Controllers
                 Message = "Invalid input",
                 Error = new ErrorView
                 {
-                    Code = "INVALID_INPUT",
+                    Code = "INPUT_VALIDATION_ERROR",
                     Message = ModelStateHelper.GetErrors(ModelState)
                 }
             });
