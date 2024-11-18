@@ -30,7 +30,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace WebIdentityApi.Controllers
 {
-    // [Authorize(Policy = "OnlyAdminRole")]
+    [Authorize(Policy = "OnlyAdminRole")]
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
@@ -83,27 +83,57 @@ namespace WebIdentityApi.Controllers
                     Message = message,
                     Error = new ErrorView
                     {
-                        Code = "INVALID_EMAIL",
+                        Code = "EXIST_EMAIL",
                         Message = message
                     }
 
                 });
             }
-
-            var password = await _userServices.GenerateDefaultPassword();
-            var staff = await _staffServices.CreateStaff(model, password);
-            await _userManager.AddToRoleAsync(staff, "Staff");
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                if (await SendConfirmEmailAsync(staff, password))
+                try
                 {
-                    return Ok(new JsonResult(new { title = "Account Created", message = "Create staff account successfully!" }));
+                    var password = await _userServices.GenerateDefaultPassword();
+                    var staff = await _staffServices.CreateStaff(model, password);
+                    await _userManager.AddToRoleAsync(staff, "Staff");
+                    if (await SendConfirmEmailAsync(staff, password))
+                    {
+                        await transaction.CommitAsync();
+                        var result = new ResponseView<User>()
+                        {
+                            Success = true,
+                            Message = "Create staff successfully!",
+                            Data = staff
+                        };
+                        return Ok(result);
+                    }
+                    await transaction.RollbackAsync();
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                    {
+                        Success = false,
+                        Message = "",
+                        Error = new ErrorView()
+                        {
+                            Code = "SERVER_ERROR",
+                            Message = "Failed to create account, please try again !"
+                        }
+                    });
+
                 }
-                return BadRequest("Failed to create account, please try again !");
-            }
-            catch (Exception)
-            {
-                return BadRequest("Failed to create account, please try again !");
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                    {
+                        Success = false,
+                        Message = "",
+                        Error = new ErrorView()
+                        {
+                            Code = "SERVER_ERROR",
+                            Message = "Failed to create account, please try again !"
+                        }
+                    });
+                }
             }
         }
 
@@ -432,11 +462,21 @@ namespace WebIdentityApi.Controllers
 
         #region Product Manage Function
         [HttpGet("get-products")]
-        public async Task<IActionResult> GetProducts([FromQuery] ProductFilters filter, int skip, int take)
+        public async Task<IActionResult> GetProducts([FromQuery] ProductFilters filter, int? pageNumber, int? pageSize)
         {
-            if (skip < 0 || take <= 0)
+            int pageSizeValue = pageSize ?? 10;
+            int pageNumberValue = pageNumber ?? 1;
+            if (pageNumberValue < 0 || pageSizeValue <= 0)
             {
-                return BadRequest("Invalid skip or take value");
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "INVALID_INPUT",
+                        Message = "Invalid page number or page size"
+                    }
+                });
             }
             var query = _context.Products.AsQueryable();
 
@@ -463,17 +503,35 @@ namespace WebIdentityApi.Controllers
                     .Include(p => p.NameTags)
                     .ThenInclude(nt => nt.NameTag)
                     .Include(p => p.ProductColor)
-                    .Where(p => p.Status == true).Skip(skip)
-                    .Take(take)
+                    .Where(p => p.Status == true).Skip((pageNumberValue - 1) * pageSizeValue)
+                    .Take(pageSizeValue)
                     .ToListAsync();
 
                 var productDtos = _mapper.Map<List<ListProductDto>>(query);
-                var hasMore = skip + take < totalProducts;
-                return Ok(new { data = productDtos, hasMore });
+                var paginateData = new PaginateDataView<ListProductDto>()
+                {
+                    Data = productDtos,
+                    totalCount = totalProducts
+                };
+                var response = new ResponseView<PaginateDataView<ListProductDto>>()
+                {
+                    Success = true,
+                    Message = "Products retrieved successfully !",
+                    Data = paginateData
+                };
+                return Ok(response);
             }
             catch (Exception)
             {
-                return StatusCode(500, "Internal Server Error");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "INTERNAL_SERVER_ERROR",
+                        Message = "Error retrieving products"
+                    }
+                });
             }
         }
 
