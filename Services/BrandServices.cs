@@ -4,11 +4,12 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Brand;
+using WebIdentityApi.Interfaces;
 using WebIdentityApi.Models;
 
 namespace WebIdentityApi.Services
 {
-    public class BrandServices
+    public class BrandServices : IBrandServices
     {
         private readonly ApplicationDbContext _context;
         public BrandServices(ApplicationDbContext context)

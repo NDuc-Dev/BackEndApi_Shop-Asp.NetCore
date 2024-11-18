@@ -70,5 +70,22 @@ namespace WebIdentityApi.Services
             await _context.SaveChangesAsync();
             return productColorSize;
         }
+
+        public async Task<Product> GetProductById(int id)
+        {
+            var product = await _context.Products
+            .Include(p => p.Brand)
+            .Include(p => p.CreatedByUser)
+            .Include(p => p.NameTags)
+            .ThenInclude(nt => nt.NameTag)
+            .Include(p => p.ProductColor)
+            .ThenInclude(pc => pc.Color)
+            .Include(p => p.ProductColor)
+            .ThenInclude(pc => pc.ProductColorSizes)
+            .ThenInclude(pc => pc.Size)
+            .FirstOrDefaultAsync(p => p.ProductId == id);
+
+            return product;
+        }
     }
 }

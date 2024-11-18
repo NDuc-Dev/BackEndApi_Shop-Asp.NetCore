@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.Http;
 using WebIdentityApi.Helpers;
 using WebIdentityApi.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Azure;
 
 namespace WebIdentityApi.Controllers
 {
@@ -43,7 +44,7 @@ namespace WebIdentityApi.Controllers
         private readonly UserServices _userServices;
         private readonly IProductServices _productServices;
         private readonly ImageServices _imageServices;
-        private readonly BrandServices _brandServices;
+        private readonly IBrandServices _brandServices;
         private readonly StaffServices _staffServices;
         public AdminController(
             UserManager<User> userManager,
@@ -54,7 +55,7 @@ namespace WebIdentityApi.Controllers
             UserServices userServices,
             IProductServices productServices,
             ImageServices imageServices,
-            BrandServices brandServices,
+            IBrandServices brandServices,
             StaffServices staffServices)
         {
             _userManager = userManager;
@@ -538,19 +539,25 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-product/{id}")]
         public async Task<IActionResult> GetProductById(int id)
         {
-            var product = await _context.Products
-            .Include(p => p.Brand)
-            .Include(p => p.NameTags)
-            .ThenInclude(nt => nt.NameTag)
-            .Include(p => p.ProductColor)
-            .ThenInclude(pc => pc.Color)
-            .Include(p => p.ProductColor)
-            .ThenInclude(pc => pc.ProductColorSizes)
-            .ThenInclude(pc => pc.Size)
-            .FirstOrDefaultAsync(p => p.ProductId == id && p.Status == true);
-            if (product == null) return NotFound();
+            var product = await _productServices.GetProductById(id);
+            if (product == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            {
+                Success = false,
+                Error = new ErrorView()
+                {
+                    Code = "NOT_FOUND",
+                    Message = "Product not found !"
+                }
+            });
             var productDto = _mapper.Map<ProductDto>(product);
-            return Ok(productDto);
+            var result = new ResponseView<ProductDto>()
+            {
+                Success = true,
+                Message = "Get product successfully",
+                Data = productDto
+            };
+
+            return Ok(result);
         }
 
         [HttpPost("create-product")]
@@ -690,14 +697,20 @@ namespace WebIdentityApi.Controllers
                     }
                 }
             }
+            var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+            var errorString = string.Join(", ", errors);
             return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
             {
+
                 Success = false,
                 Message = "Invalid input",
                 Error = new ErrorView
                 {
                     Code = "INPUT_VALIDATION_ERROR",
-                    Message = ModelStateHelper.GetErrors(ModelState)
+                    Message = errorString
                 }
             });
         }
@@ -706,10 +719,44 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> ChangeProductStatus(int id)
         {
             var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
-            product.Status = product.Status ? false : true;
-            _context.Products.Update(product);
-            await _context.SaveChangesAsync();
-            return Ok("Change product status successfully");
+            if (product == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            {
+                Success = false,
+                Error = new ErrorView()
+                {
+                    Code = "NOT_FOUND",
+                    Message = "Product not found !"
+                }
+            });
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    product.Status = product.Status ? false : true;
+                    _context.Products.Update(product);
+                    await transaction.CommitAsync();
+                    await _context.SaveChangesAsync();
+                    var response = new ResponseView()
+                    {
+                        Success = true,
+                        Message = "Change product status successfully"
+                    };
+                    return Ok(response);
+                }
+                catch (Exception)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+                    {
+                        Success = false,
+                        Error = new ErrorView()
+                        {
+                            Code = "SERVER_ERROR",
+                            Message = "Have an occured when change product status"
+                        }
+                    });
+                }
+
+            }
         }
         #endregion
 
