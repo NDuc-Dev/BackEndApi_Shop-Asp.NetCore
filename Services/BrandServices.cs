@@ -33,8 +33,7 @@ namespace WebIdentityApi.Services
 
         public async Task<Brand> GetBrandById(int id)
         {
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
-            return brand;
+            return await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
         }
 
         public async Task<List<Brand>> GetBrands()

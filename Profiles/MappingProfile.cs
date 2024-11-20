@@ -2,6 +2,7 @@ using System.Linq;
 using AutoMapper;
 using WebIdentityApi.Data;
 using WebIdentityApi.DTOs.Brand;
+using WebIdentityApi.DTOs.Color;
 using WebIdentityApi.DTOs.NameTag;
 using WebIdentityApi.DTOs.Product;
 using WebIdentityApi.DTOs.ProductColor;
@@ -71,5 +72,9 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.BrandName))
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Descriptions))
             .ForMember(dest => dest.ImagePath, opt => opt.MapFrom(src => src.ImagePath));
+
+        CreateMap<Color, ColorDto>()
+            .ForMember(dest => dest.ColorId, opt => opt.MapFrom(src => src.ColorId))
+            .ForMember(dest => dest.ColorName, opt => opt.MapFrom(src => src.ColorName));
     }
 }

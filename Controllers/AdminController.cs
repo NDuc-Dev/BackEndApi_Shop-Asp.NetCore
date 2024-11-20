@@ -46,6 +46,7 @@ namespace WebIdentityApi.Controllers
         private readonly ImageServices _imageServices;
         private readonly IBrandServices _brandServices;
         private readonly StaffServices _staffServices;
+        private readonly IColorServices _colorServices;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -56,7 +57,8 @@ namespace WebIdentityApi.Controllers
             IProductServices productServices,
             ImageServices imageServices,
             IBrandServices brandServices,
-            StaffServices staffServices)
+            StaffServices staffServices,
+            IColorServices colorServices)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -68,6 +70,7 @@ namespace WebIdentityApi.Controllers
             _imageServices = imageServices;
             _brandServices = brandServices;
             _staffServices = staffServices;
+            _colorServices = colorServices;
         }
         #region Staff Manage Function
 
@@ -330,42 +333,93 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-colors")]
         public async Task<IActionResult> GetColors()
         {
-            var color = await _context.Colors.ToListAsync();
-            return Ok(color);
+            var colors = await _colorServices.GetColors();
+            ResponseView<List<ColorDto>> result;
+            if (colors.Count() == 0 || colors == null)
+            {
+                return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<ColorDto>>()
+                {
+                    Success = false,
+                    Data = null,
+                    Message = "Not have color in list"
+                });
+            }
+            var colorDto = _mapper.Map<List<ColorDto>>(colors);
+            result = new ResponseView<List<ColorDto>>()
+            {
+                Success = true,
+                Data = colorDto,
+                Message = "Retrive color successfull !"
+            };
+            return Ok(result);
         }
 
         [HttpGet("get-color/{id}")]
         public async Task<IActionResult> GetColorById(int id)
         {
-            var color = await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == id);
-            if (color == null) return BadRequest("Color not found");
-            return Ok(color);
+            var color = await _colorServices.GetColorById(id);
+            if (color == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            {
+                Success = false,
+                Error = new ErrorView()
+                {
+                    Code = "NOT_FOUND",
+                    Message = "Color not found !"
+                }
+            });
+            var result = new ResponseView<Models.Color>()
+            {
+                Success = true,
+                Message = "Get color successfully",
+                Data = color
+            };
+            return Ok(result);
         }
 
         [HttpPost("create-color")]
         public async Task<IActionResult> CreateColor(ColorDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            var message = "";
+            if (await _context.IsExistsAsync<Models.Color>("ColorName", model.ColorName))
+            {
+                message = $"Color name {model.ColorName} has been exist, please try with another name";
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
+                {
+                    Success = false,
+                    Message = message,
+                    Error = new ErrorView
+                    {
+                        Code = "DUPPLICATE_NAME",
+                        Message = message
+                    }
+                });
+            }
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    var color = new Models.Color
-                    {
-                        ColorName = model.ColorName
-                    };
-                    _context.Colors.Add(color);
-                    await _context.SaveChangesAsync();
+                    var color = await _colorServices.CreateColorAsync(model);
                     await transaction.CommitAsync();
-                    return CreatedAtAction(nameof(GetColorById),
-                        new { id = color.ColorId },
-                        new { title = "Color Created", message = $"Create {model.ColorName} color successfully!" }
-                        );
+                    return StatusCode(StatusCodes.Status201Created, new ResponseView<Models.Color>
+                    {
+                        Success = true,
+                        Data = color,
+                        Message = "Color created successfully !"
+                    });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     await transaction.RollbackAsync();
-                    return BadRequest(ex.ToString());
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                    {
+                        Success = false,
+                        Error = new ErrorView()
+                        {
+                            Code = "SERVER_ERROR",
+                            Message = "An unexpected error occurred while creating the color"
+                        }
+                    });
                 }
             }
         }
@@ -529,7 +583,7 @@ namespace WebIdentityApi.Controllers
                     Success = false,
                     Error = new ErrorView()
                     {
-                        Code = "INTERNAL_SERVER_ERROR",
+                        Code = "SERVER_ERROR",
                         Message = "Error retrieving products"
                     }
                 });
@@ -571,7 +625,7 @@ namespace WebIdentityApi.Controllers
                 if (await _context.IsExistsAsync<Product>("ProductName", model.ProductName))
                 {
                     message = $"Product name {model.ProductName} has been exist, please try with another name";
-                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
                     {
                         Success = false,
                         Message = message,
