@@ -47,6 +47,7 @@ namespace WebIdentityApi.Controllers
         private readonly IBrandServices _brandServices;
         private readonly StaffServices _staffServices;
         private readonly IColorServices _colorServices;
+        private readonly INameTagServices _nameTagServices;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -58,7 +59,8 @@ namespace WebIdentityApi.Controllers
             ImageServices imageServices,
             IBrandServices brandServices,
             StaffServices staffServices,
-            IColorServices colorServices)
+            IColorServices colorServices,
+            INameTagServices nameTagServices)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -71,6 +73,7 @@ namespace WebIdentityApi.Controllers
             _brandServices = brandServices;
             _staffServices = staffServices;
             _colorServices = colorServices;
+            _nameTagServices = nameTagServices;
         }
         #region Staff Manage Function
 
@@ -455,44 +458,94 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-name-tags")]
         public async Task<IActionResult> GetNameTags()
         {
-            var nametag = await _context.NameTags.ToListAsync();
-            return Ok(nametag);
+            var nametags = await _nameTagServices.GetNameTags();
+            ResponseView<List<NameTagDto>> result;
+            if (nametags.Count() == 0 || nametags == null)
+            {
+                return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<NameTagDto>>()
+                {
+                    Success = false,
+                    Data = null,
+                    Message = "Not have name tag in list"
+                });
+            }
+            var nameTagDtos = _mapper.Map<List<NameTagDto>>(nametags);
+            result = new ResponseView<List<NameTagDto>>()
+            {
+                Success = true,
+                Data = nameTagDtos,
+                Message = "Retrive name tag successfull !"
+            };
+            return Ok(result);
         }
 
         [HttpGet("get-name-tag/{id}")]
         public async Task<IActionResult> GetNameTagById(int id)
         {
-            var nameTag = await _context.NameTags.FirstOrDefaultAsync(n => n.NameTagId == id);
-            if (nameTag == null) return BadRequest("Name tag does not exist !");
-            return Ok(nameTag);
+            var nameTag = await _nameTagServices.GetNameTagById(id);
+            if (nameTag == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            {
+                Success = false,
+                Error = new ErrorView()
+                {
+                    Code = "NOT_FOUND",
+                    Message = "Color not found !"
+                }
+            });
+            var result = new ResponseView<NameTag>()
+            {
+                Success = true,
+                Message = "Get color successfully",
+                Data = nameTag
+            };
+            return Ok(result);
         }
 
         [HttpPost("create-name-tag")]
         public async Task<IActionResult> CreateNameTag(NameTagDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var existName = await _context.NameTags.FirstOrDefaultAsync(n => n.Tag == model.TagName);
-            if (existName != null) return BadRequest("Name tag has been exist, please try again !");
+            var message = "";
+            if (await _context.IsExistsAsync<NameTag>("TagName", model.TagName))
+            {
+                message = $"Tag name {model.TagName} has been exist, please try with another name";
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
+                {
+                    Success = false,
+                    Message = message,
+                    Error = new ErrorView
+                    {
+                        Code = "DUPPLICATE_NAME",
+                        Message = message
+                    }
+                });
+            }
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    var nameTag = new NameTag
+                    var nameTag = await _nameTagServices.CreateNameTagAsync(model);
+                    var result = new ResponseView<NameTag>()
                     {
-                        Tag = model.TagName,
+                        Success = true,
+                        Data = nameTag,
+                        Message = "Create name tag successfully !"
                     };
-                    _context.NameTags.Add(nameTag);
-                    await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    return CreatedAtAction(nameof(GetNameTagById),
-                    new { id = nameTag.NameTagId },
-                    new { title = "Tag Created", message = $"Create {model.TagName} tag successfully!" }
-                    );
+                    return Ok(result);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     await transaction.RollbackAsync();
-                    return BadRequest(ex.Message);
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                    {
+                        Success = false,
+                        Error = new ErrorView()
+                        {
+                            Code = "SERVER_ERROR",
+                            Message = "Have an occured error while create name tag !"
+                        }
+                    });
                 }
             }
         }

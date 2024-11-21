@@ -24,7 +24,7 @@ namespace WebIdentityApi.Services
             var productMap = _mapper.Map<Product>(model);
             productMap.Brand = brand;
             productMap.CreatedByUser = user;
-            _context.Products.Add(productMap);
+            await _context.Products.AddAsync(productMap);
             await _context.SaveChangesAsync();
             return productMap;
         }

@@ -26,7 +26,7 @@ namespace WebIdentityApi.Services
                 CreatedByUser = user,
                 ImagePath = Path.GetFileName(filePath)
             };
-            _context.Brands.Add(brand);
+            await _context.Brands.AddAsync(brand);
             await _context.SaveChangesAsync();
             return brand;
         }
@@ -38,8 +38,7 @@ namespace WebIdentityApi.Services
 
         public async Task<List<Brand>> GetBrands()
         {
-            var brands = await _context.Brands.ToListAsync();
-            return brands;
+            return await _context.Brands.ToListAsync();;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace WebIdentityApi.Services
             {
                 ColorName = model.ColorName
             };
-            _context.Colors.Add(color);
+            await _context.Colors.AddAsync(color);
             await _context.SaveChangesAsync();
             return color;
         }
