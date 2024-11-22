@@ -24,10 +24,8 @@ using AutoMapper;
 using WebIdentityApi.Filters;
 using WebIdentityApi.Interfaces;
 using Microsoft.AspNetCore.Http;
-using WebIdentityApi.Helpers;
 using WebIdentityApi.Extensions;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Azure;
+using WebIdentityApi.DTOs;
 
 namespace WebIdentityApi.Controllers
 {
@@ -48,6 +46,7 @@ namespace WebIdentityApi.Controllers
         private readonly StaffServices _staffServices;
         private readonly IColorServices _colorServices;
         private readonly INameTagServices _nameTagServices;
+        private readonly ISizeServices _sizeServices;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -60,7 +59,8 @@ namespace WebIdentityApi.Controllers
             IBrandServices brandServices,
             StaffServices staffServices,
             IColorServices colorServices,
-            INameTagServices nameTagServices)
+            INameTagServices nameTagServices,
+            ISizeServices sizeServices)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -74,6 +74,7 @@ namespace WebIdentityApi.Controllers
             _staffServices = staffServices;
             _colorServices = colorServices;
             _nameTagServices = nameTagServices;
+            _sizeServices = sizeServices;
         }
         #region Staff Manage Function
 
@@ -459,7 +460,6 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> GetNameTags()
         {
             var nametags = await _nameTagServices.GetNameTags();
-            ResponseView<List<NameTagDto>> result;
             if (nametags.Count() == 0 || nametags == null)
             {
                 return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<NameTagDto>>()
@@ -470,7 +470,7 @@ namespace WebIdentityApi.Controllers
                 });
             }
             var nameTagDtos = _mapper.Map<List<NameTagDto>>(nametags);
-            result = new ResponseView<List<NameTagDto>>()
+            var result = new ResponseView<List<NameTagDto>>()
             {
                 Success = true,
                 Data = nameTagDtos,
@@ -555,16 +555,46 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-sizes")]
         public async Task<IActionResult> GetSizes()
         {
-            var sizes = await _context.Sizes.ToListAsync();
-            return Ok(sizes);
+            var sizes = await _sizeServices.GetSizes();
+            if (sizes.Count() == 0 || sizes == null)
+            {
+                return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<SizeDto>>()
+                {
+                    Success = false,
+                    Data = null,
+                    Message = "Not have size in list"
+                });
+            }
+            var sizeDtos = _mapper.Map<List<SizeDto>>(sizes);
+            var result = new ResponseView<List<SizeDto>>()
+            {
+                Success = true,
+                Data = sizeDtos,
+                Message = "Retrive size successfull !"
+            };
+            return Ok(result);
         }
 
         [HttpGet("get-size/{id}")]
         public async Task<IActionResult> GetSizeById(int id)
         {
-            var size = await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == id);
-            if (size == null) return BadRequest("Size does not exist");
-            return Ok(size);
+            var size = await _sizeServices.GetSizeById(id);
+            if (size == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            {
+                Success = false,
+                Error = new ErrorView()
+                {
+                    Code = "NOT_FOUND",
+                    Message = "Size not found !"
+                }
+            });
+            var result = new ResponseView<Models.Size>()
+            {
+                Success = true,
+                Message = "Get size successfully",
+                Data = size
+            };
+            return Ok(result);
         }
         #endregion
 

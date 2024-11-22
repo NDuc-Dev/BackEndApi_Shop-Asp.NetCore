@@ -37,7 +37,7 @@ namespace WebIdentityApi.Services
                 Product = product,
                 NameTag = nameTag,
             };
-            _context.ProductNameTags.Add(productNameTag);
+            await _context.ProductNameTags.AddAsync(productNameTag);
             await _context.SaveChangesAsync();
             return productNameTag;
         }
@@ -52,7 +52,7 @@ namespace WebIdentityApi.Services
                 Price = price,
                 ImagePath = imagePath
             };
-            _context.ProductColors.Add(productColor);
+            await _context.ProductColors.AddAsync(productColor);
             await _context.SaveChangesAsync();
             return productColor;
         }
@@ -66,7 +66,7 @@ namespace WebIdentityApi.Services
                 Size = size,
                 Quantity = quantity
             };
-            _context.ProductColorSizes.Add(productColorSize);
+            await _context.ProductColorSizes.AddAsync(productColorSize);
             await _context.SaveChangesAsync();
             return productColorSize;
         }
