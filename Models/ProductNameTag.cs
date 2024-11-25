@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebIdentityApi.Models
 {
@@ -10,5 +11,8 @@ namespace WebIdentityApi.Models
         public Product Product { get; set; }
         public int NameTagId { get; set; }
         public NameTag NameTag { get; set; }
+        public string CreateByUserId { get; set; }
+        public User CreateBy { get; set; }
+        public DateTime CreateDate { get; set; } = DateTime.Now;
     }
 }
