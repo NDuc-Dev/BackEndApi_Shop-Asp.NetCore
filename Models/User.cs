@@ -18,11 +18,16 @@ namespace WebIdentityApi.Models
         public decimal TotalSpending { get; set; } = 0;
         public int SpendingPoint { get; set; } = 0;
         public bool AccountStatus { get; set; } = true;
+        [Column(TypeName = "datetime")]
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        [Column(TypeName = "datetime")]
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
-        public ICollection<Brand> CreatedBrands { get; set; } = null;
-        public ICollection<Product> CreatedProducts { get; set; } = null;
-        public ICollection<Order> CreatedOrders { get; set; } = null;
-
+        public ICollection<Brand> CreatedBrands { get; set; }
+        public ICollection<Product> CreatedProducts { get; set; }
+        public ICollection<Color> CreatedColors { get; set; }
+        public ICollection<Size> CreatedSizes { get; set; }
+        public ICollection<NameTag> CreatedTags { get; set; }
+        public ICollection<Order> CreatedOrders { get; set; }
+        public ICollection<ActionDetail> Actions { get; set; }
     }
 }
