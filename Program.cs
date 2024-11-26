@@ -69,6 +69,7 @@ namespace WebIdentityApi
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
             builder.Services.AddScoped<JwtService>();
+            builder.Services.AddScoped<ISystemServices, SystemServices>();
             builder.Services.AddScoped<EmailService>();
             builder.Services.AddScoped<UserServices>();
             builder.Services.AddScoped<IProductServices, ProductServices>();
