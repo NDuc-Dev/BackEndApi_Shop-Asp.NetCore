@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace WebIdentityApi.Models
@@ -17,6 +18,7 @@ namespace WebIdentityApi.Models
         public string CreateByUserId { get; set; }
         [JsonIgnore]
         public User CreatedByUser { get; set; }
+        [Column(TypeName = "datetime")]
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public ICollection<Product> Products { get; set; }
     }
