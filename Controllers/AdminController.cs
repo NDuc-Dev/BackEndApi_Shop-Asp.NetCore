@@ -47,6 +47,7 @@ namespace WebIdentityApi.Controllers
         private readonly IColorServices _colorServices;
         private readonly INameTagServices _nameTagServices;
         private readonly ISizeServices _sizeServices;
+        private readonly ISystemServices _system;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -60,7 +61,8 @@ namespace WebIdentityApi.Controllers
             StaffServices staffServices,
             IColorServices colorServices,
             INameTagServices nameTagServices,
-            ISizeServices sizeServices)
+            ISizeServices sizeServices,
+            ISystemServices system)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -75,6 +77,7 @@ namespace WebIdentityApi.Controllers
             _colorServices = colorServices;
             _nameTagServices = nameTagServices;
             _sizeServices = sizeServices;
+            _system = system;
         }
         #region Staff Manage Function
 
@@ -278,9 +281,23 @@ namespace WebIdentityApi.Controllers
                     var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
                     var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
                     if (user == null) throw new Exception("User not found!");
-                    var exitsName = await _context.Brands.FirstOrDefaultAsync(b => b.BrandName == model.BrandName);
-                    if (exitsName != null) throw new Exception($"Brand {model.BrandName} has been exist, please use another name");
+                    if (await _context.IsExistsAsync<Brand>("BrandName", model.BrandName))
+                    {
+                        var message = $"Brand name {model.BrandName} has been exist, please try with another name";
+                        return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
+                        {
+                            Success = false,
+                            Message = message,
+                            Error = new ErrorView
+                            {
+                                Code = "DUPPLICATE_NAME",
+                                Message = message
+                            }
+                        });
+                    }
                     var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
+                    _system.Log("Brand", "Create", null, brand, user);
+
                     await transaction.CommitAsync();
                     return CreatedAtAction(
                     nameof(GetBrandById),

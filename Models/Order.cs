@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace WebIdentityApi.Models
 {
@@ -16,6 +17,7 @@ namespace WebIdentityApi.Models
         [Column(TypeName = "decimal(9,0)")]
         public decimal Amount { get; set; } = 0;
         public int OrderType { get; set; }
+        [JsonIgnore]
         public ICollection<OrderDetails> Details { get; set; }
     }
 }

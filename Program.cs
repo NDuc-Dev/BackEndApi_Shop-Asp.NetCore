@@ -16,6 +16,10 @@ using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
 using WebIdentityApi.Interfaces;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Newtonsoft.Json;
+using System.Buffers;
+using Newtonsoft.Json.Serialization;
 
 namespace WebIdentityApi
 {
@@ -78,7 +82,7 @@ namespace WebIdentityApi
             builder.Services.AddScoped<StaffServices>();
             builder.Services.AddScoped<IColorServices, ColorServices>();
             builder.Services.AddScoped<INameTagServices, NameTagServices>();
-            builder.Services.AddScoped<ISizeServices, SizeServices>(); 
+            builder.Services.AddScoped<ISizeServices, SizeServices>();
 
             builder.Services.AddIdentityCore<User>(options =>
             {

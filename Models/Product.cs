@@ -20,7 +20,9 @@ namespace WebIdentityApi.Models
         public DateTime CreateDate { get; set; } = DateTime.Now;
         public int BrandId { get; set; }
         public Brand Brand { get; set; }
+        [JsonIgnore]
         public ICollection<ProductNameTag> NameTags { get; set; }
+        [JsonIgnore]
         public ICollection<ProductColor> ProductColor { get; set; }
     }
 }

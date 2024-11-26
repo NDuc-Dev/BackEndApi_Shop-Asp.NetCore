@@ -20,6 +20,7 @@ namespace WebIdentityApi.Models
         public User CreatedByUser { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime CreatedDate { get; set; } = DateTime.Now;
+        [JsonIgnore]
         public ICollection<Product> Products { get; set; }
     }
 }

@@ -35,7 +35,6 @@ namespace WebIdentityApi.Data.Migrations
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     TotalSpending = table.Column<decimal>(type: "decimal(9,0)", nullable: false),
                     SpendingPoint = table.Column<int>(type: "int", nullable: false),
@@ -448,9 +447,9 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "5614873d-2870-4b09-91b7-a98140fb27e3", "1", "Admin", "Admin" },
-                    { "d2d9a920-584d-4181-9bda-fc51ee0416c4", "2", "Staff", "Staff" },
-                    { "e6878637-8822-4624-8c94-0bd66296c963", "3", "Customer", "Customer" }
+                    { "02b452b7-1749-46a3-a061-d892be613a77", "2", "Staff", "Staff" },
+                    { "bc779018-332c-49a3-8b5a-9b3f00c2bd99", "1", "Admin", "Admin" },
+                    { "c89f171b-1157-42fb-aa65-9a1eb1f00230", "3", "Customer", "Customer" }
                 });
 
             migrationBuilder.InsertData(
@@ -458,16 +457,16 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "SizeId", "CreateByUserId", "CreateDate", "SizeValue" },
                 values: new object[,]
                 {
-                    { 1, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4212), 36 },
-                    { 2, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4250), 37 },
-                    { 3, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4252), 38 },
-                    { 4, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4253), 39 },
-                    { 5, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4254), 40 },
-                    { 6, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4255), 41 },
-                    { 7, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4256), 42 },
-                    { 8, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4257), 43 },
-                    { 9, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4258), 44 },
-                    { 10, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4259), 45 }
+                    { 1, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5660), 36 },
+                    { 2, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5670), 37 },
+                    { 3, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671), 38 },
+                    { 4, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671), 39 },
+                    { 5, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5672), 40 },
+                    { 6, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673), 41 },
+                    { 7, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673), 42 },
+                    { 8, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5674), 43 },
+                    { 9, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5675), 44 },
+                    { 10, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5676), 45 }
                 });
 
             migrationBuilder.CreateIndex(

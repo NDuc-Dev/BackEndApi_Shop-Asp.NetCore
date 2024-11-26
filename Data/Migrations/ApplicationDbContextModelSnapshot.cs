@@ -51,21 +51,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "5614873d-2870-4b09-91b7-a98140fb27e3",
+                            Id = "bc779018-332c-49a3-8b5a-9b3f00c2bd99",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "d2d9a920-584d-4181-9bda-fc51ee0416c4",
+                            Id = "02b452b7-1749-46a3-a061-d892be613a77",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "e6878637-8822-4624-8c94-0bd66296c963",
+                            Id = "c89f171b-1157-42fb-aa65-9a1eb1f00230",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -511,61 +511,61 @@ namespace WebIdentityApi.Data.Migrations
                         new
                         {
                             SizeId = 1,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4212),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5660),
                             SizeValue = 36
                         },
                         new
                         {
                             SizeId = 2,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4250),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5670),
                             SizeValue = 37
                         },
                         new
                         {
                             SizeId = 3,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4252),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671),
                             SizeValue = 38
                         },
                         new
                         {
                             SizeId = 4,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4253),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671),
                             SizeValue = 39
                         },
                         new
                         {
                             SizeId = 5,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4254),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5672),
                             SizeValue = 40
                         },
                         new
                         {
                             SizeId = 6,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4255),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673),
                             SizeValue = 41
                         },
                         new
                         {
                             SizeId = 7,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4256),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673),
                             SizeValue = 42
                         },
                         new
                         {
                             SizeId = 8,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4257),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5674),
                             SizeValue = 43
                         },
                         new
                         {
                             SizeId = 9,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4258),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5675),
                             SizeValue = 44
                         },
                         new
                         {
                             SizeId = 10,
-                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4259),
+                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5676),
                             SizeValue = 45
                         });
                 });
@@ -626,9 +626,6 @@ namespace WebIdentityApi.Data.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")

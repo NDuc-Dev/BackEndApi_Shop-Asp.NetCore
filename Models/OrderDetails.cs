@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace WebIdentityApi.Models
 {
@@ -11,6 +12,7 @@ namespace WebIdentityApi.Models
         public int OrderId { get; set; }
         public Order Order { get; set; }
         public int ProductColorSizeId { get; set; }
+        [JsonIgnore]
         public ProductColorSize ProductColorSize { get; set; }
         [Column(TypeName = "decimal(9,0)")]
         public decimal UnitPrice { get; set; }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace WebIdentityApi.Models
 {
@@ -12,7 +13,6 @@ namespace WebIdentityApi.Models
         public string FullName { get; set; }
         public string ImagePath { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
         public bool IsActive { get; set; } = false;
         [Column(TypeName = "decimal(9,0)")]
         public decimal TotalSpending { get; set; } = 0;
@@ -22,12 +22,19 @@ namespace WebIdentityApi.Models
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         [Column(TypeName = "datetime")]
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
-        public ICollection<Brand> CreatedBrands { get; set; }
-        public ICollection<Product> CreatedProducts { get; set; }
-        public ICollection<Color> CreatedColors { get; set; }
-        public ICollection<Size> CreatedSizes { get; set; }
-        public ICollection<NameTag> CreatedTags { get; set; }
-        public ICollection<Order> CreatedOrders { get; set; }
-        public ICollection<ActionDetail> Actions { get; set; }
+        [JsonIgnore]
+        public ICollection<Brand> CreatedBrands { get; set; } = null;
+        [JsonIgnore]
+        public ICollection<Product> CreatedProducts { get; set; } = null;
+        [JsonIgnore]
+        public ICollection<Color> CreatedColors { get; set; } = null;
+        [JsonIgnore]
+        public ICollection<Size> CreatedSizes { get; set; } = null;
+        [JsonIgnore]
+        public ICollection<NameTag> CreatedTags { get; set; } = null;
+        [JsonIgnore]
+        public ICollection<Order> CreatedOrders { get; set; } = null;
+        [JsonIgnore]
+        public ICollection<ActionDetail> Actions { get; set; } = null;
     }
 }

@@ -1,6 +1,6 @@
 using System;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using WebIdentityApi.Data;
 using WebIdentityApi.Interfaces;
 using WebIdentityApi.Models;
@@ -17,20 +17,20 @@ namespace WebIdentityApi.Services
             _logger = logger;
         }
 
-        public void Log(string tableName, string action, object dataBefore, object dataAfter, User userHandle)
+        public async void Log(string tableName, string action, object dataBefore, object dataAfter, User userHandle)
         {
             var handle = new ActionDetail
             {
                 HandleTable = tableName,
                 Action = action,
-                DataBefore = JsonConvert.SerializeObject(dataBefore),
-                DataAfter = JsonConvert.SerializeObject(dataAfter),
+                DataBefore = JsonSerializer.Serialize(dataBefore),
+                DataAfter = JsonSerializer.Serialize(dataAfter),
                 HandleBy = userHandle,
                 UserHandle = userHandle.FullName,
                 HandleAt = DateTime.Now
             };
-            _context.ActionDetails.Add(handle);
-            _context.SaveChanges();
+            await _context.ActionDetails.AddAsync(handle);
+            await _context.SaveChangesAsync();
 
             _logger.LogInformation("Logged action: {Action} on table {TableName} by {user}", action, tableName, userHandle.FullName);
         }
