@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebIdentityApi.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Seeding_Database : Migration
+    public partial class Seeding_DB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,11 +35,13 @@ namespace WebIdentityApi.Data.Migrations
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     TotalSpending = table.Column<decimal>(type: "decimal(9,0)", nullable: false),
                     SpendingPoint = table.Column<int>(type: "int", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastLogin = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AccountStatus = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime", nullable: false),
+                    LastLogin = table.Column<DateTime>(type: "datetime", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -61,45 +63,6 @@ namespace WebIdentityApi.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Colors",
-                columns: table => new
-                {
-                    ColorId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ColorName = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Colors", x => x.ColorId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "NameTags",
-                columns: table => new
-                {
-                    NameTagId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Tag = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_NameTags", x => x.NameTagId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Sizes",
-                columns: table => new
-                {
-                    SizeId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SizeValue = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Sizes", x => x.SizeId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -118,6 +81,30 @@ namespace WebIdentityApi.Data.Migrations
                         principalTable: "AspNetRoles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ActionDetails",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    HandleByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    UserHandle = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    HandleTable = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Action = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DataBefore = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DataAfter = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    HandleAt = table.Column<DateTime>(type: "datetime", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActionDetails", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_ActionDetails_AspNetUsers_HandleByUserId",
+                        column: x => x.HandleByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -215,13 +202,53 @@ namespace WebIdentityApi.Data.Migrations
                     ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Descriptions = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreateByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedDate = table.Column<DateTime>(type: "datetime", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Brands", x => x.BrandId);
                     table.ForeignKey(
                         name: "FK_Brands_AspNetUsers_CreateByUserId",
+                        column: x => x.CreateByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Colors",
+                columns: table => new
+                {
+                    ColorId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ColorName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreateByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Colors", x => x.ColorId);
+                    table.ForeignKey(
+                        name: "FK_Colors_AspNetUsers_CreateByUserId",
+                        column: x => x.CreateByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "NameTags",
+                columns: table => new
+                {
+                    NameTagId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Tag = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreateByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NameTags", x => x.NameTagId);
+                    table.ForeignKey(
+                        name: "FK_NameTags_AspNetUsers_CreateByUserId",
                         column: x => x.CreateByUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
@@ -245,6 +272,26 @@ namespace WebIdentityApi.Data.Migrations
                     table.ForeignKey(
                         name: "FK_Orders_AspNetUsers_OrderBy",
                         column: x => x.OrderBy,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Sizes",
+                columns: table => new
+                {
+                    SizeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SizeValue = table.Column<int>(type: "int", nullable: false),
+                    CreateByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sizes", x => x.SizeId);
+                    table.ForeignKey(
+                        name: "FK_Sizes_AspNetUsers_CreateByUserId",
+                        column: x => x.CreateByUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                 });
@@ -313,11 +360,19 @@ namespace WebIdentityApi.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ProductId = table.Column<int>(type: "int", nullable: false),
-                    NameTagId = table.Column<int>(type: "int", nullable: false)
+                    NameTagId = table.Column<int>(type: "int", nullable: false),
+                    CreateByUserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreateById = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ProductNameTags", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductNameTags_AspNetUsers_CreateById",
+                        column: x => x.CreateById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_ProductNameTags_NameTags_NameTagId",
                         column: x => x.NameTagId,
@@ -393,27 +448,32 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "4c054425-f6f5-4e23-9aaa-2cf996563193", "3", "Customer", "Customer" },
-                    { "5a1ab2ae-739e-429c-9bab-818b2a74793a", "2", "Staff", "Staff" },
-                    { "891f38bb-b8fe-47b6-995d-7c4001486286", "1", "Admin", "Admin" }
+                    { "5614873d-2870-4b09-91b7-a98140fb27e3", "1", "Admin", "Admin" },
+                    { "d2d9a920-584d-4181-9bda-fc51ee0416c4", "2", "Staff", "Staff" },
+                    { "e6878637-8822-4624-8c94-0bd66296c963", "3", "Customer", "Customer" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Sizes",
-                columns: new[] { "SizeId", "SizeValue" },
+                columns: new[] { "SizeId", "CreateByUserId", "CreateDate", "SizeValue" },
                 values: new object[,]
                 {
-                    { 1, 36 },
-                    { 2, 37 },
-                    { 3, 38 },
-                    { 4, 39 },
-                    { 5, 40 },
-                    { 6, 41 },
-                    { 7, 42 },
-                    { 8, 43 },
-                    { 9, 44 },
-                    { 10, 45 }
+                    { 1, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4212), 36 },
+                    { 2, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4250), 37 },
+                    { 3, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4252), 38 },
+                    { 4, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4253), 39 },
+                    { 5, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4254), 40 },
+                    { 6, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4255), 41 },
+                    { 7, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4256), 42 },
+                    { 8, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4257), 43 },
+                    { 9, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4258), 44 },
+                    { 10, null, new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4259), 45 }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ActionDetails_HandleByUserId",
+                table: "ActionDetails",
+                column: "HandleByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -460,6 +520,16 @@ namespace WebIdentityApi.Data.Migrations
                 column: "CreateByUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Colors_CreateByUserId",
+                table: "Colors",
+                column: "CreateByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NameTags_CreateByUserId",
+                table: "NameTags",
+                column: "CreateByUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrderDetails_OrderId",
                 table: "OrderDetails",
                 column: "OrderId");
@@ -495,6 +565,11 @@ namespace WebIdentityApi.Data.Migrations
                 column: "SizeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProductNameTags_CreateById",
+                table: "ProductNameTags",
+                column: "CreateById");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProductNameTags_NameTagId",
                 table: "ProductNameTags",
                 column: "NameTagId");
@@ -513,11 +588,19 @@ namespace WebIdentityApi.Data.Migrations
                 name: "IX_Products_CreateByUserId",
                 table: "Products",
                 column: "CreateByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sizes_CreateByUserId",
+                table: "Sizes",
+                column: "CreateByUserId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "ActionDetails");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 

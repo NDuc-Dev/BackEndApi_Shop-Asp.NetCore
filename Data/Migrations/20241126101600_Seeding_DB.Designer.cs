@@ -12,15 +12,15 @@ using WebIdentityApi.Data;
 namespace WebIdentityApi.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241016093623_Seeding_Database")]
-    partial class Seeding_Database
+    [Migration("20241126101600_Seeding_DB")]
+    partial class Seeding_DB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -54,21 +54,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "891f38bb-b8fe-47b6-995d-7c4001486286",
+                            Id = "5614873d-2870-4b09-91b7-a98140fb27e3",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "5a1ab2ae-739e-429c-9bab-818b2a74793a",
+                            Id = "d2d9a920-584d-4181-9bda-fc51ee0416c4",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "4c054425-f6f5-4e23-9aaa-2cf996563193",
+                            Id = "e6878637-8822-4624-8c94-0bd66296c963",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -181,6 +181,42 @@ namespace WebIdentityApi.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("WebIdentityApi.Models.ActionDetail", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+
+                    b.Property<string>("Action")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DataAfter")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DataBefore")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("HandleAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("HandleByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("HandleTable")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserHandle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("HandleByUserId");
+
+                    b.ToTable("ActionDetails");
+                });
+
             modelBuilder.Entity("WebIdentityApi.Models.Brand", b =>
                 {
                     b.Property<int>("BrandId")
@@ -197,7 +233,7 @@ namespace WebIdentityApi.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("Descriptions")
                         .IsRequired()
@@ -225,7 +261,15 @@ namespace WebIdentityApi.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CreateByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("ColorId");
+
+                    b.HasIndex("CreateByUserId");
 
                     b.ToTable("Colors");
                 });
@@ -238,11 +282,19 @@ namespace WebIdentityApi.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NameTagId"));
 
+                    b.Property<string>("CreateByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Tag")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("NameTagId");
+
+                    b.HasIndex("CreateByUserId");
 
                     b.ToTable("NameTags");
                 });
@@ -409,6 +461,15 @@ namespace WebIdentityApi.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CreateById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreateByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("NameTagId")
                         .HasColumnType("int");
 
@@ -416,6 +477,8 @@ namespace WebIdentityApi.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreateById");
 
                     b.HasIndex("NameTagId");
 
@@ -432,10 +495,18 @@ namespace WebIdentityApi.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SizeId"));
 
+                    b.Property<string>("CreateByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("SizeValue")
                         .HasColumnType("int");
 
                     b.HasKey("SizeId");
+
+                    b.HasIndex("CreateByUserId");
 
                     b.ToTable("Sizes");
 
@@ -443,51 +514,61 @@ namespace WebIdentityApi.Data.Migrations
                         new
                         {
                             SizeId = 1,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4212),
                             SizeValue = 36
                         },
                         new
                         {
                             SizeId = 2,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4250),
                             SizeValue = 37
                         },
                         new
                         {
                             SizeId = 3,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4252),
                             SizeValue = 38
                         },
                         new
                         {
                             SizeId = 4,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4253),
                             SizeValue = 39
                         },
                         new
                         {
                             SizeId = 5,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4254),
                             SizeValue = 40
                         },
                         new
                         {
                             SizeId = 6,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4255),
                             SizeValue = 41
                         },
                         new
                         {
                             SizeId = 7,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4256),
                             SizeValue = 42
                         },
                         new
                         {
                             SizeId = 8,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4257),
                             SizeValue = 43
                         },
                         new
                         {
                             SizeId = 9,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4258),
                             SizeValue = 44
                         },
                         new
                         {
                             SizeId = 10,
+                            CreateDate = new DateTime(2024, 11, 26, 17, 16, 0, 130, DateTimeKind.Local).AddTicks(4259),
                             SizeValue = 45
                         });
                 });
@@ -500,6 +581,9 @@ namespace WebIdentityApi.Data.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<bool>("AccountStatus")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
 
@@ -508,7 +592,7 @@ namespace WebIdentityApi.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -528,7 +612,7 @@ namespace WebIdentityApi.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("LastLogin")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -545,6 +629,9 @@ namespace WebIdentityApi.Data.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
@@ -633,6 +720,15 @@ namespace WebIdentityApi.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("WebIdentityApi.Models.ActionDetail", b =>
+                {
+                    b.HasOne("WebIdentityApi.Models.User", "HandleBy")
+                        .WithMany("Actions")
+                        .HasForeignKey("HandleByUserId");
+
+                    b.Navigation("HandleBy");
+                });
+
             modelBuilder.Entity("WebIdentityApi.Models.Brand", b =>
                 {
                     b.HasOne("WebIdentityApi.Models.User", "CreatedByUser")
@@ -640,6 +736,24 @@ namespace WebIdentityApi.Data.Migrations
                         .HasForeignKey("CreateByUserId");
 
                     b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.Color", b =>
+                {
+                    b.HasOne("WebIdentityApi.Models.User", "CreateBy")
+                        .WithMany("CreatedColors")
+                        .HasForeignKey("CreateByUserId");
+
+                    b.Navigation("CreateBy");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.NameTag", b =>
+                {
+                    b.HasOne("WebIdentityApi.Models.User", "CreateBy")
+                        .WithMany("CreatedTags")
+                        .HasForeignKey("CreateByUserId");
+
+                    b.Navigation("CreateBy");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Order", b =>
@@ -727,6 +841,10 @@ namespace WebIdentityApi.Data.Migrations
 
             modelBuilder.Entity("WebIdentityApi.Models.ProductNameTag", b =>
                 {
+                    b.HasOne("WebIdentityApi.Models.User", "CreateBy")
+                        .WithMany()
+                        .HasForeignKey("CreateById");
+
                     b.HasOne("WebIdentityApi.Models.NameTag", "NameTag")
                         .WithMany("ProductTags")
                         .HasForeignKey("NameTagId")
@@ -739,9 +857,20 @@ namespace WebIdentityApi.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("CreateBy");
+
                     b.Navigation("NameTag");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("WebIdentityApi.Models.Size", b =>
+                {
+                    b.HasOne("WebIdentityApi.Models.User", "CreateBy")
+                        .WithMany("CreatedSizes")
+                        .HasForeignKey("CreateByUserId");
+
+                    b.Navigation("CreateBy");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Brand", b =>
@@ -788,11 +917,19 @@ namespace WebIdentityApi.Data.Migrations
 
             modelBuilder.Entity("WebIdentityApi.Models.User", b =>
                 {
+                    b.Navigation("Actions");
+
                     b.Navigation("CreatedBrands");
+
+                    b.Navigation("CreatedColors");
 
                     b.Navigation("CreatedOrders");
 
                     b.Navigation("CreatedProducts");
+
+                    b.Navigation("CreatedSizes");
+
+                    b.Navigation("CreatedTags");
                 });
 #pragma warning restore 612, 618
         }

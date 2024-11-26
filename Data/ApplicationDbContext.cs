@@ -26,6 +26,7 @@ namespace WebIdentityApi.Data
         public DbSet<OrderDetails> OrderDetails { get; set; }
         public DbSet<ProductColor> ProductColors { get; set; }
         public DbSet<ProductColorSize> ProductColorSizes { get; set; }
+        public DbSet<ActionDetail> ActionDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -71,10 +72,18 @@ namespace WebIdentityApi.Data
                 .HasForeignKey(od => od.ProductColorSizeId);
 
             builder.Entity<Size>()
+                .HasOne(s => s.CreateBy)
+                .WithMany(u => u.CreatedSizes)
+                .HasForeignKey(b => b.CreateByUserId);
+            builder.Entity<Size>()
                 .HasMany(p => p.ProductColorSize)
                 .WithOne(pv => pv.Size)
                 .HasForeignKey(pv => pv.SizeId);
 
+            builder.Entity<Color>()
+                .HasOne(b => b.CreateBy)
+                .WithMany(u => u.CreatedColors)
+                .HasForeignKey(b => b.CreateByUserId);
             builder.Entity<Color>()
                 .HasMany(p => p.ProductColor)
                 .WithOne(c => c.Color)
@@ -85,7 +94,15 @@ namespace WebIdentityApi.Data
                 .WithOne(pc => pc.ProductColor)
                 .HasForeignKey(pcs => pcs.ProductColorId);
 
+            builder.Entity<NameTag>()
+                .HasOne(nt => nt.CreateBy)
+                .WithMany(u => u.CreatedTags)
+                .HasForeignKey(nt => nt.CreateByUserId);
 
+            builder.Entity<ActionDetail>()
+                .HasOne(at => at.HandleBy)
+                .WithMany(u => u.Actions)
+                .HasForeignKey(at => at.HandleByUserId);
 
             base.OnModelCreating(builder);
             SeedRole(builder);
