@@ -10,6 +10,7 @@ namespace WebIdentityApi.Models
         [Key]
         public int DetailsId { get; set; }
         public int OrderId { get; set; }
+        [JsonIgnore]
         public Order Order { get; set; }
         public int ProductColorSizeId { get; set; }
         [JsonIgnore]

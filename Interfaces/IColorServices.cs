@@ -7,7 +7,7 @@ namespace WebIdentityApi.Interfaces
 {
     public interface IColorServices
     {
-        Task<Color> CreateColorAsync(ColorDto model);
+        Task<Color> CreateColorAsync(CreateColorDto model, User user);
         Task<Color> GetColorById(int id);
         Task<List<Color>> GetColors();
     }

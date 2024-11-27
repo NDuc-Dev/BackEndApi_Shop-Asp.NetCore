@@ -278,9 +278,21 @@ namespace WebIdentityApi.Controllers
                 try
                 {
                     string filePath = await _imageServices.CreatePathForImg("brands", model.Image);
-                    var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
-                    var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
-                    if (user == null) throw new Exception("User not found!");
+                    var user = await _userServices.GetCurrentUserAsync();
+                    if (user == null)
+                    {
+                        var message = "User not found !";
+                        return StatusCode(StatusCodes.Status404NotFound, new ResponseView
+                        {
+                            Success = false,
+                            Message = message,
+                            Error = new ErrorView
+                            {
+                                Code = "NOT_FOUND",
+                                Message = message
+                            }
+                        });
+                    }
                     if (await _context.IsExistsAsync<Brand>("BrandName", model.BrandName))
                     {
                         var message = $"Brand name {model.BrandName} has been exist, please try with another name";
@@ -296,9 +308,8 @@ namespace WebIdentityApi.Controllers
                         });
                     }
                     var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
-                    _system.Log("Brand", "Create", null, brand, user);
-
                     await transaction.CommitAsync();
+                    await _system.Log("Brand", "Create", null, brand, user);
                     return CreatedAtAction(
                     nameof(GetBrandById),
                     new { id = brand.BrandId },
@@ -398,10 +409,25 @@ namespace WebIdentityApi.Controllers
         }
 
         [HttpPost("create-color")]
-        public async Task<IActionResult> CreateColor(ColorDto model)
+        public async Task<IActionResult> CreateColor(CreateColorDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var message = "";
+            var user = await _userServices.GetCurrentUserAsync();
+            if (user == null)
+            {
+                message = "User not found !";
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseView
+                {
+                    Success = false,
+                    Message = message,
+                    Error = new ErrorView
+                    {
+                        Code = "NOT_FOUND",
+                        Message = message
+                    }
+                });
+            }
             if (await _context.IsExistsAsync<Models.Color>("ColorName", model.ColorName))
             {
                 message = $"Color name {model.ColorName} has been exist, please try with another name";
@@ -420,8 +446,9 @@ namespace WebIdentityApi.Controllers
             {
                 try
                 {
-                    var color = await _colorServices.CreateColorAsync(model);
+                    var color = await _colorServices.CreateColorAsync(model, user);
                     await transaction.CommitAsync();
+                    await _system.Log("Color", "Create", null, color, user);
                     return StatusCode(StatusCodes.Status201Created, new ResponseView<Models.Color>
                     {
                         Success = true,
@@ -523,7 +550,17 @@ namespace WebIdentityApi.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var message = "";
-            if (await _context.IsExistsAsync<NameTag>("TagName", model.TagName))
+            var user = await _userServices.GetCurrentUserAsync();
+            if (user == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            {
+                Success = false,
+                Error = new ErrorView()
+                {
+                    Code = "NOT_FOUND",
+                    Message = "User not found !"
+                }
+            });
+            if (await _context.IsExistsAsync<NameTag>("Tag", model.TagName))
             {
                 message = $"Tag name {model.TagName} has been exist, please try with another name";
                 return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
@@ -541,7 +578,7 @@ namespace WebIdentityApi.Controllers
             {
                 try
                 {
-                    var nameTag = await _nameTagServices.CreateNameTagAsync(model);
+                    var nameTag = await _nameTagServices.CreateNameTagAsync(model, user);
                     var result = new ResponseView<NameTag>()
                     {
                         Success = true,
@@ -549,6 +586,7 @@ namespace WebIdentityApi.Controllers
                         Message = "Create name tag successfully !"
                     };
                     await transaction.CommitAsync();
+                    await _system.Log("Tag", "Create", null, nameTag, user);
                     return Ok(result);
                 }
                 catch (Exception)
@@ -654,14 +692,16 @@ namespace WebIdentityApi.Controllers
             try
             {
                 var totalProducts = await query.CountAsync();
-                await query.Include(p => p.Brand)
+                await query
+                    .OrderBy(p => p.ProductId)
+                    .Include(p => p.Brand)
                     .Include(p => p.NameTags)
-                    .ThenInclude(nt => nt.NameTag)
-                    .Include(p => p.ProductColor)
-                    .Where(p => p.Status == true).Skip((pageNumberValue - 1) * pageSizeValue)
+                    // .ThenInclude(nt => nt.NameTag)
+                    // .Include(p => p.ProductColor)
+                    .Where(p => p.Status == true)
+                    .Skip((pageNumberValue - 1) * pageSizeValue)
                     .Take(pageSizeValue)
                     .ToListAsync();
-
                 var productDtos = _mapper.Map<List<ListProductDto>>(query);
                 var paginateData = new PaginateDataView<ListProductDto>()
                 {

@@ -9,6 +9,6 @@ namespace WebIdentityApi.Interfaces
     {
         Task<List<NameTag>> GetNameTags();
         Task<NameTag> GetNameTagById(int id);
-        Task<NameTag> CreateNameTagAsync(NameTagDto model);
+        Task<NameTag> CreateNameTagAsync(NameTagDto model, User user);
     }
 }

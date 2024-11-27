@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace WebIdentityApi.Models
 {
@@ -7,6 +8,7 @@ namespace WebIdentityApi.Models
     {
         public int id { get; set; }
         public string HandleByUserId { get; set; }
+        [JsonIgnore]
         public User HandleBy { get; set; }
         public string UserHandle { get; set; }
         public string HandleTable { get; set; }

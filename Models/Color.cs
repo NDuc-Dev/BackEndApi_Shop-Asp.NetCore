@@ -12,6 +12,7 @@ namespace WebIdentityApi.Models
         [Required(ErrorMessage = "Color name is required")]
         public string ColorName { get; set; }
         public string CreateByUserId { get; set; }
+        [JsonIgnore]
         public User CreateBy { get; set; }
         public DateTime CreateDate { get; set; } = DateTime.Now;
         [JsonIgnore]

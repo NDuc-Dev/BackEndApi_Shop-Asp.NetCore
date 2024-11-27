@@ -23,11 +23,12 @@ namespace WebIdentityApi.Services
         {
             return await _context.NameTags.FirstAsync(nt => nt.NameTagId == id);
         }
-        public async Task<NameTag> CreateNameTagAsync(NameTagDto model)
+        public async Task<NameTag> CreateNameTagAsync(NameTagDto model, User user)
         {
             var tag = new NameTag
             {
-                Tag = model.TagName
+                Tag = model.TagName,
+                CreateBy = user
             };
             await _context.AddAsync(tag);
             await _context.SaveChangesAsync();

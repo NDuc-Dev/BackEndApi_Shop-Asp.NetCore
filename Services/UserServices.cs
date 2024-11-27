@@ -4,8 +4,10 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using WebIdentityApi.Data;
@@ -20,13 +22,26 @@ namespace WebIdentityApi.Services
         private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
         private readonly EmailService _emailServices;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserServices(IConfiguration config, ApplicationDbContext context, UserManager<User> userManager, EmailService emailService)
+        public UserServices(IConfiguration config, ApplicationDbContext context, UserManager<User> userManager, EmailService emailService, IHttpContextAccessor httpContextAccessor)
         {
             _config = config;
             _context = context;
             _userManager = userManager;
             _emailServices = emailService;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        public async Task<User> GetCurrentUserAsync()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return null;
+            }
+            var userId = user.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)?.Value;
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         }
         public async Task<User> GetUserInfoFromJwtAsync(string authorizationHeader)
         {

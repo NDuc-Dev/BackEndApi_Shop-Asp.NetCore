@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using WebIdentityApi.Data;
 using WebIdentityApi.Interfaces;
@@ -17,7 +18,7 @@ namespace WebIdentityApi.Services
             _logger = logger;
         }
 
-        public async void Log(string tableName, string action, object dataBefore, object dataAfter, User userHandle)
+        public async Task Log(string tableName, string action, object dataBefore, object dataAfter, User userHandle)
         {
             var handle = new ActionDetail
             {

@@ -16,10 +16,7 @@ using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
 using WebIdentityApi.Interfaces;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Newtonsoft.Json;
 using System.Buffers;
-using Newtonsoft.Json.Serialization;
 
 namespace WebIdentityApi
 {
@@ -34,7 +31,8 @@ namespace WebIdentityApi
             object value = builder.Services.AddControllers();
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+                // options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+                options.JsonSerializerOptions.ReferenceHandler = null;
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();

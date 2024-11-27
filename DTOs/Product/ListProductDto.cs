@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using WebIdentityApi.DTOs.ProductColor;
+using WebIdentityApi.DTOs.NameTag;
 
 namespace WebIdentityApi.DTOs.Product
 {
@@ -9,7 +9,7 @@ namespace WebIdentityApi.DTOs.Product
         public string ProductName { get; set; }
         public string ProductDescription { get; set; }
         public string BrandName { get; set; }
-        public List<string> Tag { get; set; }
+        public List<NameTagDto> Tag { get; set; }
         public string ImagePath { get; set; }
     }
 }

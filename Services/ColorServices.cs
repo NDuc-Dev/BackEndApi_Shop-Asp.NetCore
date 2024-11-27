@@ -16,11 +16,12 @@ namespace WebIdentityApi.Services
             _context = context;
         }
 
-        public async Task<Color> CreateColorAsync(ColorDto model)
+        public async Task<Color> CreateColorAsync(CreateColorDto model, User user)
         {
             var color = new Color
             {
-                ColorName = model.ColorName
+                ColorName = model.ColorName,
+                CreateBy = user
             };
             await _context.Colors.AddAsync(color);
             await _context.SaveChangesAsync();
