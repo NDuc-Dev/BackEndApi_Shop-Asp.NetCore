@@ -22,12 +22,13 @@ public class MappingProfile : Profile
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
             .ForMember(dest => dest.ProductDescription, opt => opt.MapFrom(src => src.Description))
-            .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(nt => nt.NameTag.Tag)))
-            .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand.BrandName))
+            .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(nt => nt.NameTag)))
+            .ForMember(dest => dest.Brand, opt => opt.MapFrom(src => src.Brand))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
             .ForMember(dest => dest.Variant, opt => opt.MapFrom(src => src.ProductColor));
 
         CreateMap<NameTag, NameTagDto>()
+            .ForMember(dest => dest.TagId, opt => opt.MapFrom(src => src.NameTagId))
             .ForMember(dest => dest.TagName, opt => opt.MapFrom(src => src.Tag));
 
         CreateMap<ProductColor, ProductColorDto>()
@@ -57,8 +58,8 @@ public class MappingProfile : Profile
         CreateMap<Product, ListProductDto>()
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName))
             .ForMember(dest => dest.ProductDescription, opt => opt.MapFrom(src => src.Description))
-            .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand.BrandName))
-            .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(nt => nt.NameTag.Tag)))
+            .ForMember(dest => dest.Brand, opt => opt.MapFrom(src => src.Brand))
+            .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.NameTags.Select(t => t.NameTag)))
             .ForMember(dest => dest.ImagePath, opt => opt.MapFrom(src => src.ProductColor.Select(pc => pc.ImagePath.Split(';', System.StringSplitOptions.RemoveEmptyEntries).First()).First()));
 
         CreateMap<CreateProductDto, Product>()
@@ -76,5 +77,6 @@ public class MappingProfile : Profile
         CreateMap<Color, ColorDto>()
             .ForMember(dest => dest.ColorId, opt => opt.MapFrom(src => src.ColorId))
             .ForMember(dest => dest.ColorName, opt => opt.MapFrom(src => src.ColorName));
+
     }
 }

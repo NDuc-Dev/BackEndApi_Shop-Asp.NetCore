@@ -235,18 +235,44 @@ namespace WebIdentityApi.Controllers
 
         #region Brand Manage Function
         [HttpGet("get-brands")]
-        public async Task<IActionResult> GetAllBrand()
+        public async Task<IActionResult> GetBrands()
         {
             try
             {
                 var brands = await _brandServices.GetBrands();
-                if (brands == null) throw new Exception("Not have brand in list");
+                if (brands == null)
+                {
+                    return StatusCode(StatusCodes.Status204NoContent, new ResponseView()
+                    {
+                        Success = false,
+                        Message = "Not have brand in list"
+                    });
+                }
                 var brandDto = _mapper.Map<List<BrandDto>>(brands);
-                return Ok(brandDto);
+                var totalCount = brandDto.Count();
+                var paginateData = new PaginateDataView<BrandDto>()
+                {
+                    ListData = brandDto,
+                    totalCount = totalCount
+                };
+                return StatusCode(StatusCodes.Status200OK, new ResponseView<PaginateDataView<BrandDto>>
+                {
+                    Success = true,
+                    Data = paginateData,
+                    Message = "Retrive brand successfully !"
+                });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.ToString());
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "Error retrieving brand !"
+                    }
+                });
             }
         }
 
@@ -256,13 +282,37 @@ namespace WebIdentityApi.Controllers
             try
             {
                 var brand = await _brandServices.GetBrandById(id);
-                if (brand == null) throw new Exception("Brand not found");
-                var listBrandDto = _mapper.Map<BrandDto>(brand);
-                return Ok(listBrandDto);
+                if (brand == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+                    {
+                        Success = false,
+                        Error = new ErrorView()
+                        {
+                            Code = "NOT_FOUND",
+                            Message = "Brand not found !"
+                        }
+                    });
+                }
+                var brandDto = _mapper.Map<BrandDto>(brand);
+                return StatusCode(StatusCodes.Status200OK, new ResponseView<BrandDto>()
+                {
+                    Success = true,
+                    Data = brandDto,
+                    Message = "Get brand successfully !"
+                });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.ToString());
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "An occured error when get brand !"
+                    }
+                });
             }
         }
 
@@ -277,6 +327,18 @@ namespace WebIdentityApi.Controllers
             {
                 try
                 {
+                    if (!_imageServices.ProcessImageExtension(model.Image))
+                    {
+                        return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
+                        {
+                            Success = false,
+                            Error = new ErrorView
+                            {
+                                Code = "INVALID_DATA",
+                                Message = "Invalid image format. Only JPG, JPEG, and PNG files are allowed."
+                            }
+                        });
+                    }
                     string filePath = await _imageServices.CreatePathForImg("brands", model.Image);
                     var user = await _userServices.GetCurrentUserAsync();
                     if (user == null)
@@ -310,16 +372,25 @@ namespace WebIdentityApi.Controllers
                     var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
                     await transaction.CommitAsync();
                     await _system.Log("Brand", "Create", null, brand, user);
-                    return CreatedAtAction(
-                    nameof(GetBrandById),
-                    new { id = brand.BrandId },
-                    new { title = "Brand Created", message = $"Create {model.BrandName} brand successfully!" }
-                    );
+                    return StatusCode(StatusCodes.Status201Created, new ResponseView<Brand>()
+                    {
+                        Success = true,
+                        Message = "Brand Created Successfully",
+                        Data = brand
+                    });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     await transaction.RollbackAsync();
-                    return BadRequest(ex.ToString());
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                    {
+                        Success = false,
+                        Error = new ErrorView()
+                        {
+                            Code = "SERVER_ERROR",
+                            Message = "An occured error while creating brand !"
+                        }
+                    });
                 }
             }
         }
@@ -366,7 +437,6 @@ namespace WebIdentityApi.Controllers
         public async Task<IActionResult> GetColors()
         {
             var colors = await _colorServices.GetColors();
-            ResponseView<List<ColorDto>> result;
             if (colors.Count() == 0 || colors == null)
             {
                 return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<ColorDto>>()
@@ -377,13 +447,12 @@ namespace WebIdentityApi.Controllers
                 });
             }
             var colorDto = _mapper.Map<List<ColorDto>>(colors);
-            result = new ResponseView<List<ColorDto>>()
+            return StatusCode(StatusCodes.Status200OK, new ResponseView<List<ColorDto>>()
             {
                 Success = true,
                 Data = colorDto,
                 Message = "Retrive color successfull !"
-            };
-            return Ok(result);
+            });
         }
 
         [HttpGet("get-color/{id}")]
@@ -399,13 +468,12 @@ namespace WebIdentityApi.Controllers
                     Message = "Color not found !"
                 }
             });
-            var result = new ResponseView<Models.Color>()
+            return StatusCode(StatusCodes.Status200OK, new ResponseView<Models.Color>()
             {
                 Success = true,
-                Message = "Get color successfully",
+                Message = "Retrived color successfully",
                 Data = color
-            };
-            return Ok(result);
+            });
         }
 
         [HttpPost("create-color")]
@@ -691,21 +759,21 @@ namespace WebIdentityApi.Controllers
             }
             try
             {
-                var totalProducts = await query.CountAsync();
                 await query
                     .OrderBy(p => p.ProductId)
                     .Include(p => p.Brand)
                     .Include(p => p.NameTags)
-                    // .ThenInclude(nt => nt.NameTag)
-                    // .Include(p => p.ProductColor)
+                    .ThenInclude(nt => nt.NameTag)
+                    .Include(p => p.ProductColor)
                     .Where(p => p.Status == true)
                     .Skip((pageNumberValue - 1) * pageSizeValue)
                     .Take(pageSizeValue)
                     .ToListAsync();
+                var totalProducts = await query.CountAsync();
                 var productDtos = _mapper.Map<List<ListProductDto>>(query);
                 var paginateData = new PaginateDataView<ListProductDto>()
                 {
-                    Data = productDtos,
+                    ListData = productDtos,
                     totalCount = totalProducts
                 };
                 var response = new ResponseView<PaginateDataView<ListProductDto>>()
@@ -724,7 +792,7 @@ namespace WebIdentityApi.Controllers
                     Error = new ErrorView()
                     {
                         Code = "SERVER_ERROR",
-                        Message = "Error retrieving products"
+                        Message = "Error retrieving products !"
                     }
                 });
             }
@@ -760,8 +828,7 @@ namespace WebIdentityApi.Controllers
             if (ModelState.IsValid)
             {
                 string message = "";
-                var authorizationHeader = Request.Headers.Authorization.FirstOrDefault();
-                var user = await _userServices.GetUserInfoFromJwtAsync(authorizationHeader);
+                var user = await _userServices.GetCurrentUserAsync();
                 if (await _context.IsExistsAsync<Product>("ProductName", model.ProductName))
                 {
                     message = $"Product name {model.ProductName} has been exist, please try with another name";
@@ -864,20 +931,18 @@ namespace WebIdentityApi.Controllers
                             }
                         }
                         await transaction.CommitAsync();
-                        var response = new ResponseView<Product>
+                        await _system.Log("Product", "Create", null, product, user);
+                        return StatusCode(StatusCodes.Status200OK, new ResponseView<Product>
                         {
                             Success = true,
                             Message = "Product Created Successfully",
                             Data = product
 
-                        };
-                        return Ok(response);
+                        });
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         await transaction.RollbackAsync();
-                        message = $"An error occurred while adding the product- " + ex.Message;
-
                         return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView<Product>
                         {
                             Success = false,
@@ -885,7 +950,7 @@ namespace WebIdentityApi.Controllers
                             Error = new ErrorView
                             {
                                 Code = "SERVER_ERROR",
-                                Message = message
+                                Message = "An error occurred while adding the product !"
                             }
                         });
                     }
@@ -896,7 +961,7 @@ namespace WebIdentityApi.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
             var errorString = string.Join(", ", errors);
-            return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+            return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
             {
 
                 Success = false,
@@ -912,8 +977,7 @@ namespace WebIdentityApi.Controllers
         [HttpPost("change-status/{id}")]
         public async Task<IActionResult> ChangeProductStatus(int id)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
-            if (product == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            if (!await _context.IsExistsAsync<Product>("ProductId", id)) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
             {
                 Success = false,
                 Error = new ErrorView()
@@ -926,10 +990,14 @@ namespace WebIdentityApi.Controllers
             {
                 try
                 {
+                    var user = await _userServices.GetCurrentUserAsync();
+                    var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
+                    var productBefore = product;
                     product.Status = product.Status ? false : true;
                     _context.Products.Update(product);
-                    await transaction.CommitAsync();
                     await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    await _system.Log("Product", "Update", productBefore, product, user);
                     var response = new ResponseView()
                     {
                         Success = true,

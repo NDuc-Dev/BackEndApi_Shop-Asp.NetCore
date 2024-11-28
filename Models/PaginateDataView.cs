@@ -4,7 +4,7 @@ namespace WebIdentityApi.Models
 {
     public class PaginateDataView<T>
     {
-        public IEnumerable<T> Data { get; set; }
+        public IEnumerable<T> ListData { get; set; }
         public int totalCount { get; set; }
     }
 }
