@@ -436,51 +436,81 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-colors")]
         public async Task<IActionResult> GetColors()
         {
-            var colors = await _colorServices.GetColors();
-            if (colors.Count() == 0 || colors == null)
+            try
             {
-                return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<ColorDto>>()
+                var colors = await _colorServices.GetColors();
+                if (colors.Count() == 0 || colors == null)
                 {
-                    Success = false,
-                    Data = null,
-                    Message = "Not have color in list"
+                    return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<ColorDto>>()
+                    {
+                        Success = false,
+                        Data = null,
+                        Message = "Not have color in list"
+                    });
+                }
+                var colorDto = _mapper.Map<List<ColorDto>>(colors);
+                return StatusCode(StatusCodes.Status200OK, new ResponseView<List<ColorDto>>()
+                {
+                    Success = true,
+                    Data = colorDto,
+                    Message = "Retrive color successfull !"
                 });
             }
-            var colorDto = _mapper.Map<List<ColorDto>>(colors);
-            return StatusCode(StatusCodes.Status200OK, new ResponseView<List<ColorDto>>()
+            catch (Exception)
             {
-                Success = true,
-                Data = colorDto,
-                Message = "Retrive color successfull !"
-            });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "Error retrieving products !"
+                    }
+                });
+            }
         }
 
         [HttpGet("get-color/{id}")]
         public async Task<IActionResult> GetColorById(int id)
         {
-            var color = await _colorServices.GetColorById(id);
-            if (color == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            try
             {
-                Success = false,
-                Error = new ErrorView()
+                var color = await _colorServices.GetColorById(id);
+                if (color == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                 {
-                    Code = "NOT_FOUND",
-                    Message = "Color not found !"
-                }
-            });
-            return StatusCode(StatusCodes.Status200OK, new ResponseView<Models.Color>()
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "NOT_FOUND",
+                        Message = "Color not found !"
+                    }
+                });
+                return StatusCode(StatusCodes.Status200OK, new ResponseView<Models.Color>()
+                {
+                    Success = true,
+                    Message = "Retrived color successfully",
+                    Data = color
+                });
+            }
+            catch (Exception)
             {
-                Success = true,
-                Message = "Retrived color successfully",
-                Data = color
-            });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "Error retrieving color !"
+                    }
+                });
+            }
         }
 
         [HttpPost("create-color")]
         public async Task<IActionResult> CreateColor(CreateColorDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var message = "";
+            string message;
             var user = await _userServices.GetCurrentUserAsync();
             if (user == null)
             {
@@ -825,78 +855,77 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-product")]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                string message = "";
-                var user = await _userServices.GetCurrentUserAsync();
-                if (await _context.IsExistsAsync<Product>("ProductName", model.ProductName))
+                var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                var respone = new ErrorViewForModelState()
                 {
-                    message = $"Product name {model.ProductName} has been exist, please try with another name";
-                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
+                    Success = false,
+                    Error = new ErrorModelStateView()
                     {
-                        Success = false,
-                        Message = message,
-                        Error = new ErrorView
-                        {
-                            Code = "DUPPLICATE_NAME",
-                            Message = message
-                        }
-                    });
-                }
-                if (!await _context.IsExistsAsync<Brand>("BrandId", model.BrandId))
-                {
-                    message = "Brand does not exist, please try again";
-                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
-                    {
-                        Success = false,
-                        Message = message,
-                        Error = new ErrorView
-                        {
-                            Code = "INVALID_DATA",
-                            Message = message
-                        }
-                    });
+                        Code = "INVALID_INPUT",
+                        Errors = err
+                    }
                 };
-                using (var transaction = await _context.Database.BeginTransactionAsync())
+                return BadRequest(respone);
+            }
+            string message;
+            var user = await _userServices.GetCurrentUserAsync();
+            if (user == null)
+            {
+                message = "User not found !";
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseView
                 {
-                    try
+                    Success = false,
+                    Message = message,
+                    Error = new ErrorView
                     {
-                        var product = await _productServices.CreateProductAsync(model, model.BrandId, user);
-                        if (model.NameTagId != null && model.NameTagId.Count > 0)
+                        Code = "NOT_FOUND",
+                        Message = message
+                    }
+                });
+            }
+            if (await _context.IsExistsAsync<Product>("ProductName", model.ProductName))
+            {
+                message = $"Product name {model.ProductName} has been exist, please try with another name";
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
+                {
+                    Success = false,
+                    Message = message,
+                    Error = new ErrorView
+                    {
+                        Code = "DUPPLICATE_NAME",
+                        Message = message
+                    }
+                });
+            }
+            if (!await _context.IsExistsAsync<Brand>("BrandId", model.BrandId))
+            {
+                message = "Brand does not exist, please try again!";
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                {
+                    Success = false,
+                    Message = message,
+                    Error = new ErrorView
+                    {
+                        Code = "INVALID_DATA",
+                        Message = message
+                    }
+                });
+            };
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var product = await _productServices.CreateProductAsync(model, model.BrandId, user);
+                    if (model.NameTagId != null && model.NameTagId.Count > 0)
+                    {
+                        foreach (var tagId in model.NameTagId)
                         {
-                            foreach (var tagId in model.NameTagId)
-                            {
-                                if (!await _context.IsExistsAsync<NameTag>("NameTagId", tagId))
-                                {
-                                    await transaction.RollbackAsync();
-                                    message = "Inavalid name tag";
-                                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
-                                    {
-                                        Success = false,
-                                        Message = message,
-                                        Error = new ErrorView
-                                        {
-                                            Message = message,
-                                            Code = "INVALID_DATA"
-                                        }
-                                    });
-                                }
-                                await _productServices.CreateProductNameTagAsync(product, tagId);
-                            }
-                        }
-                        foreach (var variant in model.Variants)
-                        {
-                            var imagesPath = string.Empty;
-                            foreach (var image in variant.images)
-                            {
-                                var filePath = _imageServices.CreatePathForBase64Img("products", image);
-                                imagesPath += $"{filePath};";
-                            }
-                            imagesPath = imagesPath.TrimEnd(';');
-                            if (!await _context.IsExistsAsync<Models.Color>("ColorId", variant.ColorId))
+                            if (!await _context.IsExistsAsync<NameTag>("NameTagId", tagId))
                             {
                                 await transaction.RollbackAsync();
-                                message = "Inavalid color";
+                                message = "Inavalid name tag";
                                 return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
                                 {
                                     Success = false,
@@ -907,71 +936,80 @@ namespace WebIdentityApi.Controllers
                                         Code = "INVALID_DATA"
                                     }
                                 });
-                            };
-                            var productColor = await _productServices.CreateProductColorAsync(product, variant.ColorId, variant.Price, imagesPath);
-
-                            foreach (var size in variant.ProductColorSize)
-                            {
-                                if (!await _context.IsExistsAsync<Models.Size>("SizeId", size.SizeId))
-                                {
-                                    await transaction.RollbackAsync();
-                                    message = "Inavalid size";
-                                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
-                                    {
-                                        Success = false,
-                                        Message = message,
-                                        Error = new ErrorView
-                                        {
-                                            Message = message,
-                                            Code = "INVALID_DATA"
-                                        }
-                                    });
-                                }
-                                var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, size.SizeId, size.Quantity);
                             }
+                            await _productServices.CreateProductNameTagAsync(product, tagId);
                         }
-                        await transaction.CommitAsync();
-                        await _system.Log("Product", "Create", null, product, user);
-                        return StatusCode(StatusCodes.Status200OK, new ResponseView<Product>
-                        {
-                            Success = true,
-                            Message = "Product Created Successfully",
-                            Data = product
-
-                        });
                     }
-                    catch (Exception)
+                    foreach (var variant in model.Variants)
                     {
-                        await transaction.RollbackAsync();
-                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView<Product>
+                        var imagesPath = string.Empty;
+                        foreach (var image in variant.images)
                         {
-                            Success = false,
-                            Message = message,
-                            Error = new ErrorView
+                            var filePath = _imageServices.CreatePathForBase64Img("products", image);
+                            imagesPath += $"{filePath};";
+                        }
+                        imagesPath = imagesPath.TrimEnd(';');
+                        if (!await _context.IsExistsAsync<Models.Color>("ColorId", variant.ColorId))
+                        {
+                            await transaction.RollbackAsync();
+                            message = $"Inavalid color id {variant.ColorId}";
+                            return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
                             {
-                                Code = "SERVER_ERROR",
-                                Message = "An error occurred while adding the product !"
+                                Success = false,
+                                Message = message,
+                                Error = new ErrorView
+                                {
+                                    Message = message,
+                                    Code = "INVALID_DATA"
+                                }
+                            });
+                        };
+                        var productColor = await _productServices.CreateProductColorAsync(product, variant.ColorId, variant.Price, imagesPath);
+
+                        foreach (var size in variant.ProductColorSize)
+                        {
+                            if (!await _context.IsExistsAsync<Models.Size>("SizeId", size.SizeId))
+                            {
+                                await transaction.RollbackAsync();
+                                message = $"Inavalid size id {size.SizeId}";
+                                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                                {
+                                    Success = false,
+                                    Message = message,
+                                    Error = new ErrorView
+                                    {
+                                        Message = message,
+                                        Code = "INVALID_DATA"
+                                    }
+                                });
                             }
-                        });
+                            var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, size.SizeId, size.Quantity);
+                        }
                     }
+                    await transaction.CommitAsync();
+                    await _system.Log("Product", "Create", null, product, user);
+                    return StatusCode(StatusCodes.Status200OK, new ResponseView<Product>
+                    {
+                        Success = true,
+                        Message = "Product Created Successfully",
+                        Data = product
+
+                    });
+                }
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                    {
+                        Success = false,
+                        Error = new ErrorView
+                        {
+                            Code = "SERVER_ERROR",
+                            Message = "An error occurred while adding the product !"
+                        }
+                    });
                 }
             }
-            var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-            var errorString = string.Join(", ", errors);
-            return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
-            {
-
-                Success = false,
-                Message = "Invalid input",
-                Error = new ErrorView
-                {
-                    Code = "INPUT_VALIDATION_ERROR",
-                    Message = errorString
-                }
-            });
         }
 
         [HttpPost("change-status/{id}")]
@@ -992,7 +1030,7 @@ namespace WebIdentityApi.Controllers
                 {
                     var user = await _userServices.GetCurrentUserAsync();
                     var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
-                    var productBefore = product;
+                    var productBefore = _mapper.Map<Product>(product);
                     product.Status = product.Status ? false : true;
                     _context.Products.Update(product);
                     await _context.SaveChangesAsync();
