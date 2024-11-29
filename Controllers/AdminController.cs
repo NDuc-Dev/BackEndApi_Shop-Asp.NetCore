@@ -321,7 +321,17 @@ namespace WebIdentityApi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                var respone = new ErrorViewForModelState()
+                {
+                    Success = false,
+                    Error = new ErrorModelStateView()
+                    {
+                        Code = "INVALID_INPUT",
+                        Errors = err
+                    }
+                };
+                return BadRequest(respone);
             }
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
@@ -509,7 +519,20 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-color")]
         public async Task<IActionResult> CreateColor(CreateColorDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                var respone = new ErrorViewForModelState()
+                {
+                    Success = false,
+                    Error = new ErrorModelStateView()
+                    {
+                        Code = "INVALID_INPUT",
+                        Errors = err
+                    }
+                };
+                return BadRequest(respone);
+            }
             string message;
             var user = await _userServices.GetCurrentUserAsync();
             if (user == null)
@@ -646,7 +669,20 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-name-tag")]
         public async Task<IActionResult> CreateNameTag(NameTagDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                var respone = new ErrorViewForModelState()
+                {
+                    Success = false,
+                    Error = new ErrorModelStateView()
+                    {
+                        Code = "INVALID_INPUT",
+                        Errors = err
+                    }
+                };
+                return BadRequest(respone);
+            }
             var message = "";
             var user = await _userServices.GetCurrentUserAsync();
             if (user == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
