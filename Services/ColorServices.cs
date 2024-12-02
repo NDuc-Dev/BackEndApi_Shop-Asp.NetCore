@@ -28,14 +28,14 @@ namespace WebIdentityApi.Services
             return color;
         }
 
-        public async Task<Color> GetColorById(int id)
+        public Task<Color> GetColorById(int id)
         {
-            return await _context.Colors.FirstOrDefaultAsync(c => c.ColorId == id);
+            return _context.Colors.FirstOrDefaultAsync(c => c.ColorId == id);
         }
 
-        public async Task<List<Color>> GetColors()
+        public Task<List<Color>> GetColors()
         {
-            return await _context.Colors.ToListAsync();
+            return _context.Colors.ToListAsync();
         }
     }
 }

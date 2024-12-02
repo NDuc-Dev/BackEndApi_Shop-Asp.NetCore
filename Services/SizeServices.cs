@@ -26,13 +26,13 @@ namespace WebIdentityApi.Services
             await _context.SaveChangesAsync();
             return size;
         }
-        public async Task<List<Size>> GetSizes()
+        public Task<List<Size>> GetSizes()
         {
-            return await _context.Sizes.ToListAsync();
+            return _context.Sizes.ToListAsync();
         }
-        public async Task<Size> GetSizeById(int id)
+        public Task<Size> GetSizeById(int id)
         {
-            return await _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == id);
+            return _context.Sizes.FirstOrDefaultAsync(s => s.SizeId == id);
         }
     }
 }

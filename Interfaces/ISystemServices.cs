@@ -5,6 +5,6 @@ namespace WebIdentityApi.Interfaces
 {
     public interface ISystemServices
     {
-        Task Log(string tableName, string action, object dataBefore, object dataAfter, User userHandle);
+        Task<AuditLog> CreateLog(string action, object dataBefore, object dataAfter, User userHandle, string searchKeyword);
     }
 }

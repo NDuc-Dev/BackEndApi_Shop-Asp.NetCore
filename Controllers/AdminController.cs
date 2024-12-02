@@ -26,6 +26,7 @@ using WebIdentityApi.Interfaces;
 using Microsoft.AspNetCore.Http;
 using WebIdentityApi.Extensions;
 using WebIdentityApi.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace WebIdentityApi.Controllers
 {
@@ -48,6 +49,7 @@ namespace WebIdentityApi.Controllers
         private readonly INameTagServices _nameTagServices;
         private readonly ISizeServices _sizeServices;
         private readonly ISystemServices _system;
+        private readonly ILogger<AdminController> _logger;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -62,7 +64,8 @@ namespace WebIdentityApi.Controllers
             IColorServices colorServices,
             INameTagServices nameTagServices,
             ISizeServices sizeServices,
-            ISystemServices system)
+            ISystemServices system,
+            ILogger<AdminController> logger)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -78,6 +81,7 @@ namespace WebIdentityApi.Controllers
             _nameTagServices = nameTagServices;
             _sizeServices = sizeServices;
             _system = system;
+            _logger = logger;
         }
         #region Staff Manage Function
 
@@ -381,7 +385,8 @@ namespace WebIdentityApi.Controllers
                     }
                     var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
                     await transaction.CommitAsync();
-                    await _system.Log("Brand", "Create", null, brand, user);
+                    var auditLog =  await _system.CreateLog("Create", null, brand, user, null);
+                    _logger.LogInformation("User performed action: {@AuditLog}", auditLog);
                     return StatusCode(StatusCodes.Status201Created, new ResponseView<Brand>()
                     {
                         Success = true,
@@ -569,7 +574,7 @@ namespace WebIdentityApi.Controllers
                 {
                     var color = await _colorServices.CreateColorAsync(model, user);
                     await transaction.CommitAsync();
-                    await _system.Log("Color", "Create", null, color, user);
+                    // await _system.Log("Color", "Create", null, color, user);
                     return StatusCode(StatusCodes.Status201Created, new ResponseView<Models.Color>
                     {
                         Success = true,
@@ -720,7 +725,7 @@ namespace WebIdentityApi.Controllers
                         Message = "Create name tag successfully !"
                     };
                     await transaction.CommitAsync();
-                    await _system.Log("Tag", "Create", null, nameTag, user);
+                    // await _system.Log("Tag", "Create", null, nameTag, user);
                     return Ok(result);
                 }
                 catch (Exception)
@@ -1023,7 +1028,7 @@ namespace WebIdentityApi.Controllers
                         }
                     }
                     await transaction.CommitAsync();
-                    await _system.Log("Product", "Create", null, product, user);
+                    // await _system.Log("Product", "Create", null, product, user);
                     return StatusCode(StatusCodes.Status200OK, new ResponseView<Product>
                     {
                         Success = true,
@@ -1071,7 +1076,7 @@ namespace WebIdentityApi.Controllers
                     _context.Products.Update(product);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    await _system.Log("Product", "Update", productBefore, product, user);
+                    // await _system.Log("Product", "Update", productBefore, product, user);
                     var response = new ResponseView()
                     {
                         Success = true,

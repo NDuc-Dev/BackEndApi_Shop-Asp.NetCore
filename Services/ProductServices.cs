@@ -71,9 +71,9 @@ namespace WebIdentityApi.Services
             return productColorSize;
         }
 
-        public async Task<Product> GetProductById(int id)
+        public Task<Product> GetProductById(int id)
         {
-            var product = await _context.Products
+            var product = _context.Products
             .Include(p => p.Brand)
             .Include(p => p.CreatedByUser)
             .Include(p => p.NameTags)

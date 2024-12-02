@@ -33,14 +33,14 @@ namespace WebIdentityApi.Services
             return brand;
         }
 
-        public async Task<Brand> GetBrandById(int id)
+        public Task<Brand> GetBrandById(int id)
         {
-            return await _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
+            return _context.Brands.FirstOrDefaultAsync(b => b.BrandId == id);
         }
 
-        public async Task<List<Brand>> GetBrands()
+        public Task<List<Brand>> GetBrands()
         {
-            return await _context.Brands.ToListAsync(); ;
+            return _context.Brands.ToListAsync(); ;
         }
     }
 }

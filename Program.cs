@@ -17,6 +17,10 @@ using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
 using WebIdentityApi.Interfaces;
 using System.Buffers;
+using Serilog;
+using Microsoft.Extensions.Logging;
+using System;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace WebIdentityApi
 {
@@ -27,7 +31,16 @@ namespace WebIdentityApi
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            Log.Logger = new LoggerConfiguration()
+            .WriteTo.File(
+                path: $"Logs/audit_log-{DateTime.Now:dd-MM-yy}.log",
+                rollingInterval: RollingInterval.Day,
+                outputTemplate: "{ Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz } [{Level}] ({UserId}) {Message}{NewLine}{Exception}")
+            .MinimumLevel.Information()
+            .WriteTo.Console(theme :AnsiConsoleTheme.Code)
+            .Enrich.FromLogContext()
+            .CreateLogger();
+            builder.Host.UseSerilog();
             object value = builder.Services.AddControllers();
             builder.Services.AddControllers().AddJsonOptions(options =>
             {

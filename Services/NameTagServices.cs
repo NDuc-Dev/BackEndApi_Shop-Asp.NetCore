@@ -15,13 +15,13 @@ namespace WebIdentityApi.Services
         {
             _context = context;
         }
-        public async Task<List<NameTag>> GetNameTags()
+        public Task<List<NameTag>> GetNameTags()
         {
-            return await _context.NameTags.ToListAsync();
+            return _context.NameTags.ToListAsync();
         }
-        public async Task<NameTag> GetNameTagById(int id)
+        public Task<NameTag> GetNameTagById(int id)
         {
-            return await _context.NameTags.FirstAsync(nt => nt.NameTagId == id);
+            return _context.NameTags.FirstAsync(nt => nt.NameTagId == id);
         }
         public async Task<NameTag> CreateNameTagAsync(NameTagDto model, User user)
         {
