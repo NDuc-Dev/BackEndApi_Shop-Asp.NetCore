@@ -10,17 +10,16 @@ public class LogEnrichmentMiddleware
     {
         _next = next;
     }
-
+ 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Thêm thông tin UserId vào LogContext nếu có
-        var userId = context.User?.FindFirst("nameid")?.Value ?? "Anonymous";
-        var requestId = context.TraceIdentifier; // ID của request hiện tại
+        var userId = context.User?.FindFirst("nameId")?.Value ?? "Anonymous";
+        var requestId = context.TraceIdentifier; 
 
         using (LogContext.PushProperty("UserId", userId))
         using (LogContext.PushProperty("RequestId", requestId))
         {
-            await _next(context); // Tiếp tục pipeline
+            await _next(context); 
         }
     }
 }
