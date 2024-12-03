@@ -48,8 +48,7 @@ namespace WebIdentityApi.Controllers
         private readonly IColorServices _colorServices;
         private readonly INameTagServices _nameTagServices;
         private readonly ISizeServices _sizeServices;
-        private readonly ISystemServices _system;
-        private readonly ILogger<AdminController> _logger;
+        private readonly IAuditLogServices _logger;
         public AdminController(
             UserManager<User> userManager,
             EmailService emailService,
@@ -64,8 +63,7 @@ namespace WebIdentityApi.Controllers
             IColorServices colorServices,
             INameTagServices nameTagServices,
             ISizeServices sizeServices,
-            ISystemServices system,
-            ILogger<AdminController> logger)
+            IAuditLogServices logger)
         {
             _userManager = userManager;
             _emailService = emailService;
@@ -80,7 +78,6 @@ namespace WebIdentityApi.Controllers
             _colorServices = colorServices;
             _nameTagServices = nameTagServices;
             _sizeServices = sizeServices;
-            _system = system;
             _logger = logger;
         }
         #region Staff Manage Function
@@ -384,9 +381,11 @@ namespace WebIdentityApi.Controllers
                         });
                     }
                     var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
+                    var brandDto = _mapper.Map<BrandDto>(brand);
                     await transaction.CommitAsync();
-                    var auditLog =  await _system.CreateLog("Create", null, brand, user, null);
-                    _logger.LogInformation("User performed action: {@AuditLog}", auditLog);
+                    // var auditLog = _system.CreateLog("Create", null, brand, user, null);
+                    // _logger.LogInformation("User performed action: {@AuditLog}", auditLog);
+                    await _logger.LogActionAsync(user, "Create Brand", null, brandDto, null);
                     return StatusCode(StatusCodes.Status201Created, new ResponseView<Brand>()
                     {
                         Success = true,

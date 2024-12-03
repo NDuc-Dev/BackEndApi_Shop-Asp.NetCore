@@ -32,13 +32,22 @@ namespace WebIdentityApi
 
             // Add services to the container.
             Log.Logger = new LoggerConfiguration()
-            .WriteTo.File(
-                path: $"Logs/audit_log-{DateTime.Now:dd-MM-yy}.log",
-                rollingInterval: RollingInterval.Day,
-                outputTemplate: "{ Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz } [{Level}] ({UserId}) {Message}{NewLine}{Exception}")
-            .MinimumLevel.Information()
-            .WriteTo.Console(theme :AnsiConsoleTheme.Code)
             .Enrich.FromLogContext()
+            .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+            .WriteTo.Logger(lc => lc
+                .WriteTo.File(
+                    path: $"logs/system_log-{DateTime.Now:dd-MM-yy}.log",
+                    rollingInterval: RollingInterval.Day,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"
+                )
+                .Filter.ByExcluding(e => e.Properties.ContainsKey("AuditLog")))
+            .WriteTo.Logger(lc => lc
+                .WriteTo.File(
+                    path: $"logs/audit_log-{DateTime.Now:dd-MM-yy}.log.json",
+                    rollingInterval: RollingInterval.Day,
+                    formatter: new Serilog.Formatting.Json.JsonFormatter()
+                )
+                .Filter.ByIncludingOnly(e => e.Properties.ContainsKey("AuditLog")))
             .CreateLogger();
             builder.Host.UseSerilog();
             object value = builder.Services.AddControllers();
@@ -89,8 +98,8 @@ namespace WebIdentityApi
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
             builder.Services.AddScoped<JwtService>();
-            builder.Services.AddScoped<ISystemServices, SystemServices>();
             builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<IAuditLogServices, AuditLogService>();
             builder.Services.AddScoped<UserServices>();
             builder.Services.AddScoped<IProductServices, ProductServices>();
             builder.Services.AddScoped<ImageServices>();
@@ -146,6 +155,7 @@ namespace WebIdentityApi
             });
 
             var app = builder.Build();
+            app.UseMiddleware<LogEnrichmentMiddleware>();
 
             app.UseCors(opt =>
             {

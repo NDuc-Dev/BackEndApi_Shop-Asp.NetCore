@@ -12,11 +12,9 @@ namespace WebIdentityApi.Services
     public class BrandServices : IBrandServices
     {
         private readonly ApplicationDbContext _context;
-        private readonly ISystemServices _system;
-        public BrandServices(ApplicationDbContext context, ISystemServices system)
+        public BrandServices(ApplicationDbContext context)
         {
             _context = context;
-            _system = system;
         }
 
         public async Task<Brand> CreateBrandAsync(CreateBrandDto model, User user, string filePath)
