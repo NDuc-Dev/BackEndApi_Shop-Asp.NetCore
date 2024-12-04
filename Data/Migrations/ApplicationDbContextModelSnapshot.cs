@@ -51,21 +51,21 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "bc779018-332c-49a3-8b5a-9b3f00c2bd99",
+                            Id = "6a7e13dc-c942-4c10-9a0a-262006b32ee3",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "02b452b7-1749-46a3-a061-d892be613a77",
+                            Id = "eff5ca00-d72b-4059-ad8b-85f2c6df3856",
                             ConcurrencyStamp = "2",
                             Name = "Staff",
                             NormalizedName = "Staff"
                         },
                         new
                         {
-                            Id = "c89f171b-1157-42fb-aa65-9a1eb1f00230",
+                            Id = "0c70d315-966f-42f1-aca3-a8d0b30faff4",
                             ConcurrencyStamp = "3",
                             Name = "Customer",
                             NormalizedName = "Customer"
@@ -176,42 +176,6 @@ namespace WebIdentityApi.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("WebIdentityApi.Models.ActionDetail", b =>
-                {
-                    b.Property<int>("id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
-
-                    b.Property<string>("Action")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DataAfter")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DataBefore")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("HandleAt")
-                        .HasColumnType("datetime");
-
-                    b.Property<string>("HandleByUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("HandleTable")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserHandle")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("id");
-
-                    b.HasIndex("HandleByUserId");
-
-                    b.ToTable("ActionDetails");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Brand", b =>
@@ -511,61 +475,61 @@ namespace WebIdentityApi.Data.Migrations
                         new
                         {
                             SizeId = 1,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5660),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4305),
                             SizeValue = 36
                         },
                         new
                         {
                             SizeId = 2,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5670),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4358),
                             SizeValue = 37
                         },
                         new
                         {
                             SizeId = 3,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4359),
                             SizeValue = 38
                         },
                         new
                         {
                             SizeId = 4,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4360),
                             SizeValue = 39
                         },
                         new
                         {
                             SizeId = 5,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5672),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4361),
                             SizeValue = 40
                         },
                         new
                         {
                             SizeId = 6,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4362),
                             SizeValue = 41
                         },
                         new
                         {
                             SizeId = 7,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4363),
                             SizeValue = 42
                         },
                         new
                         {
                             SizeId = 8,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5674),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4364),
                             SizeValue = 43
                         },
                         new
                         {
                             SizeId = 9,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5675),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4367),
                             SizeValue = 44
                         },
                         new
                         {
                             SizeId = 10,
-                            CreateDate = new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5676),
+                            CreateDate = new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4368),
                             SizeValue = 45
                         });
                 });
@@ -712,15 +676,6 @@ namespace WebIdentityApi.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("WebIdentityApi.Models.ActionDetail", b =>
-                {
-                    b.HasOne("WebIdentityApi.Models.User", "HandleBy")
-                        .WithMany("Actions")
-                        .HasForeignKey("HandleByUserId");
-
-                    b.Navigation("HandleBy");
                 });
 
             modelBuilder.Entity("WebIdentityApi.Models.Brand", b =>
@@ -911,8 +866,6 @@ namespace WebIdentityApi.Data.Migrations
 
             modelBuilder.Entity("WebIdentityApi.Models.User", b =>
                 {
-                    b.Navigation("Actions");
-
                     b.Navigation("CreatedBrands");
 
                     b.Navigation("CreatedColors");

@@ -26,7 +26,6 @@ namespace WebIdentityApi.Data
         public DbSet<OrderDetails> OrderDetails { get; set; }
         public DbSet<ProductColor> ProductColors { get; set; }
         public DbSet<ProductColorSize> ProductColorSizes { get; set; }
-        public DbSet<ActionDetail> ActionDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -99,10 +98,6 @@ namespace WebIdentityApi.Data
                 .WithMany(u => u.CreatedTags)
                 .HasForeignKey(nt => nt.CreateByUserId);
 
-            builder.Entity<ActionDetail>()
-                .HasOne(at => at.HandleBy)
-                .WithMany(u => u.Actions)
-                .HasForeignKey(at => at.HandleByUserId);
 
             base.OnModelCreating(builder);
             SeedRole(builder);

@@ -330,7 +330,7 @@ namespace WebIdentityApi.Controllers
             var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
-                await _logger.LogActionAsync(user, "Create Brand", "Brand", null, "Model state invalid", Serilog.Events.LogEventLevel.Warning);
+                await _logger.LogActionAsync(user, "Create", "Brand", null, "Model state invalid", Serilog.Events.LogEventLevel.Warning);
                 var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 var respone = new ErrorViewForModelState()
                 {
@@ -349,7 +349,7 @@ namespace WebIdentityApi.Controllers
                 {
                     if (!_imageServices.ProcessImageExtension(model.Image))
                     {
-                        await _logger.LogActionAsync(user, "Create Brand", "Brand", null, "Invalid image format", Serilog.Events.LogEventLevel.Warning);
+                        await _logger.LogActionAsync(user, "Create", "Brand", null, "Invalid image format", Serilog.Events.LogEventLevel.Warning);
                         return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
                         {
                             Success = false,
@@ -363,7 +363,7 @@ namespace WebIdentityApi.Controllers
                     string filePath = await _imageServices.CreatePathForImg("brands", model.Image);
                     if (await _context.IsExistsAsync<Brand>("BrandName", model.BrandName))
                     {
-                        await _logger.LogActionAsync(user, "Create Brand", "Brand", null, $"Brand name {model.BrandName} is dupplicate", Serilog.Events.LogEventLevel.Warning);
+                        await _logger.LogActionAsync(user, "Create", "Brand", null, $"Brand name {model.BrandName} is dupplicate", Serilog.Events.LogEventLevel.Warning);
                         var message = $"Brand name {model.BrandName} has been exist, please try with another name";
                         return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
                         {
@@ -379,7 +379,7 @@ namespace WebIdentityApi.Controllers
                     var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
                     var brandDto = _mapper.Map<BrandDto>(brand);
                     await transaction.CommitAsync();
-                    await _logger.LogActionAsync(user, "Create Brand", "Brand", brandDto.BrandId.ToString(), null);
+                    await _logger.LogActionAsync(user, "Create", "Brand", brandDto.BrandId.ToString(), null);
                     return StatusCode(StatusCodes.Status201Created, new ResponseView<Brand>()
                     {
                         Success = true,
@@ -390,7 +390,7 @@ namespace WebIdentityApi.Controllers
                 catch (Exception e)
                 {
                     await transaction.RollbackAsync();
-                    await _logger.LogActionAsync(user, "Create Brand", "Brand", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
+                    await _logger.LogActionAsync(user, "Create", "Brand", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                     return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                     {
                         Success = false,
@@ -529,7 +529,7 @@ namespace WebIdentityApi.Controllers
             var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
-                await _logger.LogActionAsync(user, "Create Color", "Color", null, "Invalid model state", Serilog.Events.LogEventLevel.Warning);
+                await _logger.LogActionAsync(user, "Create", "Color", null, "Invalid model state", Serilog.Events.LogEventLevel.Warning);
                 var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 var respone = new ErrorViewForModelState()
                 {
@@ -545,6 +545,7 @@ namespace WebIdentityApi.Controllers
             string message;
             if (await _context.IsExistsAsync<Models.Color>("ColorName", model.ColorName))
             {
+                await _logger.LogActionAsync(user, "Create", "Color", null, $"Color name {model.ColorName} is dupplicate", Serilog.Events.LogEventLevel.Warning);
                 message = $"Color name {model.ColorName} has been exist, please try with another name";
                 return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
                 {
@@ -563,7 +564,7 @@ namespace WebIdentityApi.Controllers
                 {
                     var color = await _colorServices.CreateColorAsync(model, user);
                     await transaction.CommitAsync();
-                    // await _system.Log("Color", "Create", null, color, user);
+                    await _logger.LogActionAsync(user, "Create", "Color", color.ColorId.ToString(), null, Serilog.Events.LogEventLevel.Information);
                     return StatusCode(StatusCodes.Status201Created, new ResponseView<Models.Color>
                     {
                         Success = true,
@@ -571,9 +572,10 @@ namespace WebIdentityApi.Controllers
                         Message = "Color created successfully !"
                     });
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     await transaction.RollbackAsync();
+                    await _logger.LogActionAsync(user, "Create", "Color", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                     return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                     {
                         Success = false,

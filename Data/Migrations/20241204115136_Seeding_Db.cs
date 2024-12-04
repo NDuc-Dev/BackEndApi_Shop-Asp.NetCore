@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebIdentityApi.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Seeding_DB : Migration
+    public partial class Seeding_Db : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -80,30 +80,6 @@ namespace WebIdentityApi.Data.Migrations
                         principalTable: "AspNetRoles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ActionDetails",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    HandleByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    UserHandle = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    HandleTable = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Action = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DataBefore = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DataAfter = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    HandleAt = table.Column<DateTime>(type: "datetime", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ActionDetails", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_ActionDetails_AspNetUsers_HandleByUserId",
-                        column: x => x.HandleByUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -447,9 +423,9 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "02b452b7-1749-46a3-a061-d892be613a77", "2", "Staff", "Staff" },
-                    { "bc779018-332c-49a3-8b5a-9b3f00c2bd99", "1", "Admin", "Admin" },
-                    { "c89f171b-1157-42fb-aa65-9a1eb1f00230", "3", "Customer", "Customer" }
+                    { "0c70d315-966f-42f1-aca3-a8d0b30faff4", "3", "Customer", "Customer" },
+                    { "6a7e13dc-c942-4c10-9a0a-262006b32ee3", "1", "Admin", "Admin" },
+                    { "eff5ca00-d72b-4059-ad8b-85f2c6df3856", "2", "Staff", "Staff" }
                 });
 
             migrationBuilder.InsertData(
@@ -457,22 +433,17 @@ namespace WebIdentityApi.Data.Migrations
                 columns: new[] { "SizeId", "CreateByUserId", "CreateDate", "SizeValue" },
                 values: new object[,]
                 {
-                    { 1, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5660), 36 },
-                    { 2, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5670), 37 },
-                    { 3, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671), 38 },
-                    { 4, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5671), 39 },
-                    { 5, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5672), 40 },
-                    { 6, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673), 41 },
-                    { 7, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5673), 42 },
-                    { 8, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5674), 43 },
-                    { 9, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5675), 44 },
-                    { 10, null, new DateTime(2024, 11, 26, 23, 49, 49, 678, DateTimeKind.Local).AddTicks(5676), 45 }
+                    { 1, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4305), 36 },
+                    { 2, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4358), 37 },
+                    { 3, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4359), 38 },
+                    { 4, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4360), 39 },
+                    { 5, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4361), 40 },
+                    { 6, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4362), 41 },
+                    { 7, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4363), 42 },
+                    { 8, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4364), 43 },
+                    { 9, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4367), 44 },
+                    { 10, null, new DateTime(2024, 12, 4, 18, 51, 36, 417, DateTimeKind.Local).AddTicks(4368), 45 }
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ActionDetails_HandleByUserId",
-                table: "ActionDetails",
-                column: "HandleByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -597,9 +568,6 @@ namespace WebIdentityApi.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ActionDetails");
-
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 

@@ -34,7 +34,5 @@ namespace WebIdentityApi.Models
         public ICollection<NameTag> CreatedTags { get; set; } = null;
         [JsonIgnore]
         public ICollection<Order> CreatedOrders { get; set; } = null;
-        [JsonIgnore]
-        public ICollection<ActionDetail> Actions { get; set; } = null;
     }
 }
