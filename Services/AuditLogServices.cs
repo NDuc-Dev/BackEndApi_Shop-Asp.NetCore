@@ -1,27 +1,43 @@
 using System;
 using System.Threading.Tasks;
 using Serilog;
+using Serilog.Events;
 using WebIdentityApi.Interfaces;
 using WebIdentityApi.Models;
 
 public class AuditLogService : IAuditLogServices
 {
 #nullable enable
-    public async Task LogActionAsync(User user, string actionName, object? beforeData = null, object? afterData = null, string? keywords = null)
+    public async Task LogActionAsync(User user, string actionName, string? table = null, string? objId = null, string? exception = null, LogEventLevel? level = LogEventLevel.Information)
     {
         var logEntry = new AuditLog
         {
-            UserId = user.Id,
-            UserName = user.FullName,
+            ActorId = user.Id,
+            ActorName = user.FullName,
             Action = actionName,
-            DataBefore = beforeData,
-            DataAfter = afterData,
+            AffectedTable = table,
             TimeStamp = DateTime.Now,
-            SearchKeyword = keywords
+            ObjId = objId,
+            Exception = exception
         };
 
-        Log.ForContext("AuditLog", true)
-           .Information("{@logEntry}", logEntry);
+        var logger = Log.ForContext("AuditLog", true);
+
+        switch (level)
+        {
+            case LogEventLevel.Information:
+                logger.Information("Audit log: {@LogEntry}", logEntry);
+                break;
+            case LogEventLevel.Warning:
+                logger.Warning("Audit log: {@LogEntry}", logEntry);
+                break;
+            case LogEventLevel.Error:
+                logger.Error("Audit log: {@LogEntry}", logEntry);
+                break;
+            default:
+                logger.Debug("Audit log: {@LogEntry}", logEntry);
+                break;
+        }
 
         await Task.CompletedTask;
     }

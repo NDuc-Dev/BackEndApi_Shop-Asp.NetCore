@@ -80,6 +80,8 @@ namespace WebIdentityApi.Controllers
             _sizeServices = sizeServices;
             _logger = logger;
         }
+
+
         #region Staff Manage Function
 
         [HttpPost("create-staff-account")]
@@ -238,6 +240,7 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-brands")]
         public async Task<IActionResult> GetBrands()
         {
+            var user = await _userServices.GetCurrentUserAsync();
             try
             {
                 var brands = await _brandServices.GetBrands();
@@ -263,8 +266,9 @@ namespace WebIdentityApi.Controllers
                     Message = "Retrive brand successfully !"
                 });
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                await _logger.LogActionAsync(user, "Get brands", "Brand", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView
                 {
                     Success = false,
@@ -280,11 +284,13 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-brand/{id}")]
         public async Task<IActionResult> GetBrandById(int id)
         {
+            var user = await _userServices.GetCurrentUserAsync();
             try
             {
                 var brand = await _brandServices.GetBrandById(id);
                 if (brand == null)
                 {
+                    await _logger.LogActionAsync(user, "Get Brand By Id", "Brand", null, $"Not found brand have id {id}", Serilog.Events.LogEventLevel.Warning);
                     return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                     {
                         Success = false,
@@ -303,8 +309,9 @@ namespace WebIdentityApi.Controllers
                     Message = "Get brand successfully !"
                 });
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                await _logger.LogActionAsync(user, "Get brand by id", "Brand", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                 {
                     Success = false,
@@ -320,8 +327,10 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-brand")]
         public async Task<IActionResult> CreateBrand([FromForm] CreateBrandDto model)
         {
+            var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
+                await _logger.LogActionAsync(user, "Create Brand", "Brand", null, "Model state invalid", Serilog.Events.LogEventLevel.Warning);
                 var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 var respone = new ErrorViewForModelState()
                 {
@@ -340,6 +349,7 @@ namespace WebIdentityApi.Controllers
                 {
                     if (!_imageServices.ProcessImageExtension(model.Image))
                     {
+                        await _logger.LogActionAsync(user, "Create Brand", "Brand", null, "Invalid image format", Serilog.Events.LogEventLevel.Warning);
                         return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
                         {
                             Success = false,
@@ -351,23 +361,9 @@ namespace WebIdentityApi.Controllers
                         });
                     }
                     string filePath = await _imageServices.CreatePathForImg("brands", model.Image);
-                    var user = await _userServices.GetCurrentUserAsync();
-                    if (user == null)
-                    {
-                        var message = "User not found !";
-                        return StatusCode(StatusCodes.Status404NotFound, new ResponseView
-                        {
-                            Success = false,
-                            Message = message,
-                            Error = new ErrorView
-                            {
-                                Code = "NOT_FOUND",
-                                Message = message
-                            }
-                        });
-                    }
                     if (await _context.IsExistsAsync<Brand>("BrandName", model.BrandName))
                     {
+                        await _logger.LogActionAsync(user, "Create Brand", "Brand", null, $"Brand name {model.BrandName} is dupplicate", Serilog.Events.LogEventLevel.Warning);
                         var message = $"Brand name {model.BrandName} has been exist, please try with another name";
                         return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
                         {
@@ -383,9 +379,7 @@ namespace WebIdentityApi.Controllers
                     var brand = await _brandServices.CreateBrandAsync(model, user, filePath);
                     var brandDto = _mapper.Map<BrandDto>(brand);
                     await transaction.CommitAsync();
-                    // var auditLog = _system.CreateLog("Create", null, brand, user, null);
-                    // _logger.LogInformation("User performed action: {@AuditLog}", auditLog);
-                    await _logger.LogActionAsync(user, "Create Brand", null, brandDto, null);
+                    await _logger.LogActionAsync(user, "Create Brand", "Brand", brandDto.BrandId.ToString(), null);
                     return StatusCode(StatusCodes.Status201Created, new ResponseView<Brand>()
                     {
                         Success = true,
@@ -393,9 +387,10 @@ namespace WebIdentityApi.Controllers
                         Data = brand
                     });
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     await transaction.RollbackAsync();
+                    await _logger.LogActionAsync(user, "Create Brand", "Brand", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                     return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                     {
                         Success = false,
@@ -450,6 +445,7 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-colors")]
         public async Task<IActionResult> GetColors()
         {
+            var user = await _userServices.GetCurrentUserAsync();
             try
             {
                 var colors = await _colorServices.GetColors();
@@ -470,15 +466,16 @@ namespace WebIdentityApi.Controllers
                     Message = "Retrive color successfull !"
                 });
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                await _logger.LogActionAsync(user, "Get Colors", "Color", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                 {
                     Success = false,
                     Error = new ErrorView()
                     {
                         Code = "SERVER_ERROR",
-                        Message = "Error retrieving products !"
+                        Message = "Error retrieving colors !"
                     }
                 });
             }
@@ -487,18 +484,23 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-color/{id}")]
         public async Task<IActionResult> GetColorById(int id)
         {
+            var user = await _userServices.GetCurrentUserAsync();
             try
             {
                 var color = await _colorServices.GetColorById(id);
-                if (color == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+                if (color == null)
                 {
-                    Success = false,
-                    Error = new ErrorView()
+                    await _logger.LogActionAsync(user, "Get Color by id", "Color", null, $"Not found color have color id {id}", Serilog.Events.LogEventLevel.Warning);
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                     {
-                        Code = "NOT_FOUND",
-                        Message = "Color not found !"
-                    }
-                });
+                        Success = false,
+                        Error = new ErrorView()
+                        {
+                            Code = "NOT_FOUND",
+                            Message = "Color not found !"
+                        }
+                    });
+                }
                 return StatusCode(StatusCodes.Status200OK, new ResponseView<Models.Color>()
                 {
                     Success = true,
@@ -506,8 +508,9 @@ namespace WebIdentityApi.Controllers
                     Data = color
                 });
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                await _logger.LogActionAsync(user, "Get Color by id", "Color", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                 {
                     Success = false,
@@ -523,8 +526,10 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-color")]
         public async Task<IActionResult> CreateColor(CreateColorDto model)
         {
+            var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
+                await _logger.LogActionAsync(user, "Create Color", "Color", null, "Invalid model state", Serilog.Events.LogEventLevel.Warning);
                 var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 var respone = new ErrorViewForModelState()
                 {
@@ -538,21 +543,6 @@ namespace WebIdentityApi.Controllers
                 return BadRequest(respone);
             }
             string message;
-            var user = await _userServices.GetCurrentUserAsync();
-            if (user == null)
-            {
-                message = "User not found !";
-                return StatusCode(StatusCodes.Status404NotFound, new ResponseView
-                {
-                    Success = false,
-                    Message = message,
-                    Error = new ErrorView
-                    {
-                        Code = "NOT_FOUND",
-                        Message = message
-                    }
-                });
-            }
             if (await _context.IsExistsAsync<Models.Color>("ColorName", model.ColorName))
             {
                 message = $"Color name {model.ColorName} has been exist, please try with another name";
@@ -895,6 +885,7 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-product")]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto model)
         {
+            var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
                 var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
@@ -910,7 +901,6 @@ namespace WebIdentityApi.Controllers
                 return BadRequest(respone);
             }
             string message;
-            var user = await _userServices.GetCurrentUserAsync();
             if (user == null)
             {
                 message = "User not found !";
@@ -1052,30 +1042,33 @@ namespace WebIdentityApi.Controllers
             }
         }
 
-        [HttpPost("change-status/{id}")]
+        [HttpPost("change-product-status/{id}")]
         public async Task<IActionResult> ChangeProductStatus(int id)
         {
-            if (!await _context.IsExistsAsync<Product>("ProductId", id)) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            var user = await _userServices.GetCurrentUserAsync();
+            if (!await _context.IsExistsAsync<Product>("ProductId", id))
             {
-                Success = false,
-                Error = new ErrorView()
+                await _logger.LogActionAsync(user, "Change Status", "Product", null, $"Not found product have product id = {id}", Serilog.Events.LogEventLevel.Warning);
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                 {
-                    Code = "NOT_FOUND",
-                    Message = "Product not found !"
-                }
-            });
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "NOT_FOUND",
+                        Message = "Product not found !"
+                    }
+                });
+            }
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    var user = await _userServices.GetCurrentUserAsync();
                     var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
-                    var productBefore = _mapper.Map<Product>(product);
                     product.Status = product.Status ? false : true;
                     _context.Products.Update(product);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    // await _system.Log("Product", "Update", productBefore, product, user);
+                    await _logger.LogActionAsync(user, "Change status", "Product", product.ProductId.ToString(), null, Serilog.Events.LogEventLevel.Information);
                     var response = new ResponseView()
                     {
                         Success = true,
@@ -1083,8 +1076,9 @@ namespace WebIdentityApi.Controllers
                     };
                     return Ok(response);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    await _logger.LogActionAsync(user, "Change status", "Product", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                     return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                     {
                         Success = false,

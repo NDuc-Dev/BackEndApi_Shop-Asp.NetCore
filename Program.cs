@@ -34,6 +34,7 @@ namespace WebIdentityApi
             Log.Logger = new LoggerConfiguration()
             .Enrich.FromLogContext()
             .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
             .WriteTo.Logger(lc => lc
                 .WriteTo.File(
                     path: $"logs/system_log-{DateTime.Now:dd-MM-yy}.log",
@@ -43,9 +44,8 @@ namespace WebIdentityApi
                 .Filter.ByExcluding(e => e.Properties.ContainsKey("AuditLog")))
             .WriteTo.Logger(lc => lc
                 .WriteTo.File(
-                    path: $"logs/audit_log-{DateTime.Now:dd-MM-yy}.log.json",
-                    rollingInterval: RollingInterval.Day,
-                    formatter: new Serilog.Formatting.Json.JsonFormatter()
+                    path: $"logs/audit_log-{DateTime.Now:dd-MM-yy}.log",
+                    rollingInterval: RollingInterval.Day
                 )
                 .Filter.ByIncludingOnly(e => e.Properties.ContainsKey("AuditLog")))
             .CreateLogger();
