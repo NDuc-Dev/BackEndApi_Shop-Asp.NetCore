@@ -12,13 +12,11 @@ using System.Text;
 using WebIdentityApi.Data;
 using WebIdentityApi.Models;
 using WebIdentityApi.Services;
-using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
 using WebIdentityApi.Interfaces;
 using System.Buffers;
 using Serilog;
-using Microsoft.Extensions.Logging;
 using System;
 using Serilog.Sinks.SystemConsole.Themes;
 

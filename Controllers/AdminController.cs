@@ -290,7 +290,6 @@ namespace WebIdentityApi.Controllers
                 var brand = await _brandServices.GetBrandById(id);
                 if (brand == null)
                 {
-                    await _logger.LogActionAsync(user, "Get Brand By Id", "Brand", null, $"Not found brand have id {id}", Serilog.Events.LogEventLevel.Warning);
                     return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                     {
                         Success = false,
@@ -330,7 +329,6 @@ namespace WebIdentityApi.Controllers
             var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
-                await _logger.LogActionAsync(user, "Create", "Brand", null, "Model state invalid", Serilog.Events.LogEventLevel.Warning);
                 var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 var respone = new ErrorViewForModelState()
                 {
@@ -349,7 +347,6 @@ namespace WebIdentityApi.Controllers
                 {
                     if (!_imageServices.ProcessImageExtension(model.Image))
                     {
-                        await _logger.LogActionAsync(user, "Create", "Brand", null, "Invalid image format", Serilog.Events.LogEventLevel.Warning);
                         return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
                         {
                             Success = false,
@@ -363,7 +360,6 @@ namespace WebIdentityApi.Controllers
                     string filePath = await _imageServices.CreatePathForImg("brands", model.Image);
                     if (await _context.IsExistsAsync<Brand>("BrandName", model.BrandName))
                     {
-                        await _logger.LogActionAsync(user, "Create", "Brand", null, $"Brand name {model.BrandName} is dupplicate", Serilog.Events.LogEventLevel.Warning);
                         var message = $"Brand name {model.BrandName} has been exist, please try with another name";
                         return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
                         {
@@ -490,7 +486,6 @@ namespace WebIdentityApi.Controllers
                 var color = await _colorServices.GetColorById(id);
                 if (color == null)
                 {
-                    await _logger.LogActionAsync(user, "Get Color by id", "Color", null, $"Not found color have color id {id}", Serilog.Events.LogEventLevel.Warning);
                     return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                     {
                         Success = false,
@@ -529,7 +524,6 @@ namespace WebIdentityApi.Controllers
             var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
-                await _logger.LogActionAsync(user, "Create", "Color", null, "Invalid model state", Serilog.Events.LogEventLevel.Warning);
                 var err = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 var respone = new ErrorViewForModelState()
                 {
@@ -545,7 +539,6 @@ namespace WebIdentityApi.Controllers
             string message;
             if (await _context.IsExistsAsync<Models.Color>("ColorName", model.ColorName))
             {
-                await _logger.LogActionAsync(user, "Create", "Color", null, $"Color name {model.ColorName} is dupplicate", Serilog.Events.LogEventLevel.Warning);
                 message = $"Color name {model.ColorName} has been exist, please try with another name";
                 return StatusCode(StatusCodes.Status400BadRequest, new ResponseView
                 {
@@ -620,46 +613,82 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-name-tags")]
         public async Task<IActionResult> GetNameTags()
         {
-            var nametags = await _nameTagServices.GetNameTags();
-            if (nametags.Count() == 0 || nametags == null)
+            var user = await _userServices.GetCurrentUserAsync();
+            try
             {
-                return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<NameTagDto>>()
+                var nametags = await _nameTagServices.GetNameTags();
+                if (nametags.Count() == 0 || nametags == null)
+                {
+                    return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<NameTagDto>>()
+                    {
+                        Success = false,
+                        Data = null,
+                        Message = "Not have name tag in list"
+                    });
+                }
+                var nameTagDtos = _mapper.Map<List<NameTagDto>>(nametags);
+                var result = new ResponseView<List<NameTagDto>>()
+                {
+                    Success = true,
+                    Data = nameTagDtos,
+                    Message = "Retrive name tag successfull !"
+                };
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                await _logger.LogActionAsync(user, "Get", "NameTags", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                 {
                     Success = false,
-                    Data = null,
-                    Message = "Not have name tag in list"
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "Have an occured error while retrive name tag !"
+                    }
                 });
             }
-            var nameTagDtos = _mapper.Map<List<NameTagDto>>(nametags);
-            var result = new ResponseView<List<NameTagDto>>()
-            {
-                Success = true,
-                Data = nameTagDtos,
-                Message = "Retrive name tag successfull !"
-            };
-            return Ok(result);
+
         }
 
         [HttpGet("get-name-tag/{id}")]
         public async Task<IActionResult> GetNameTagById(int id)
         {
-            var nameTag = await _nameTagServices.GetNameTagById(id);
-            if (nameTag == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            var user = await _userServices.GetCurrentUserAsync();
+            try
             {
-                Success = false,
-                Error = new ErrorView()
+                var nameTag = await _nameTagServices.GetNameTagById(id);
+                if (nameTag == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                 {
-                    Code = "NOT_FOUND",
-                    Message = "Color not found !"
-                }
-            });
-            var result = new ResponseView<NameTag>()
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "NOT_FOUND",
+                        Message = "Name tag not found !"
+                    }
+                });
+                var result = new ResponseView<NameTag>()
+                {
+                    Success = true,
+                    Message = "Retrived name tag successfully",
+                    Data = nameTag
+                };
+                return Ok(result);
+            }
+            catch (Exception e)
             {
-                Success = true,
-                Message = "Get color successfully",
-                Data = nameTag
-            };
-            return Ok(result);
+                await _logger.LogActionAsync(user, "Get", "NameTags", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "Have an occured error while create name tag !"
+                    }
+                });
+            }
+
         }
 
         [HttpPost("create-name-tag")]
