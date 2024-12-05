@@ -19,6 +19,8 @@ using System.Buffers;
 using Serilog;
 using System;
 using Serilog.Sinks.SystemConsole.Themes;
+using WebIdentityApi.Services.Advance;
+using WebIdentityApi.Interfaces.Advance;
 
 namespace WebIdentityApi
 {
@@ -106,6 +108,10 @@ namespace WebIdentityApi
             builder.Services.AddScoped<IColorServices, ColorServices>();
             builder.Services.AddScoped<INameTagServices, NameTagServices>();
             builder.Services.AddScoped<ISizeServices, SizeServices>();
+
+            //Advance services
+            builder.Services.AddScoped<IAdvanceProductServices, AdvanceProductServices>();
+            builder.Services.AddScoped<IAdvanceBrandServices, AdvanceBrandServices>();
 
             builder.Services.AddIdentityCore<User>(options =>
             {

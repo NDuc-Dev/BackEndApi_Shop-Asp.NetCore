@@ -26,7 +26,7 @@ using WebIdentityApi.Interfaces;
 using Microsoft.AspNetCore.Http;
 using WebIdentityApi.Extensions;
 using WebIdentityApi.DTOs;
-using Microsoft.Extensions.Logging;
+using WebIdentityApi.Interfaces.Advance;
 
 namespace WebIdentityApi.Controllers
 {
@@ -41,9 +41,10 @@ namespace WebIdentityApi.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly UserServices _userServices;
-        private readonly IProductServices _productServices;
+        // private readonly IProductServices _productServices;
+        private readonly IAdvanceProductServices _productServices;
         private readonly ImageServices _imageServices;
-        private readonly IBrandServices _brandServices;
+        private readonly IAdvanceBrandServices _brandServices;
         private readonly StaffServices _staffServices;
         private readonly IColorServices _colorServices;
         private readonly INameTagServices _nameTagServices;
@@ -56,13 +57,14 @@ namespace WebIdentityApi.Controllers
             ApplicationDbContext context,
             IMapper mapper,
             UserServices userServices,
-            IProductServices productServices,
+            // IProductServices productServices,
             ImageServices imageServices,
-            IBrandServices brandServices,
+            IAdvanceBrandServices brandServices,
             StaffServices staffServices,
             IColorServices colorServices,
             INameTagServices nameTagServices,
             ISizeServices sizeServices,
+            IAdvanceProductServices productServices,
             IAuditLogServices logger)
         {
             _userManager = userManager;
@@ -745,7 +747,7 @@ namespace WebIdentityApi.Controllers
                         Message = "Create name tag successfully !"
                     };
                     await transaction.CommitAsync();
-                    // await _system.Log("Tag", "Create", null, nameTag, user);
+                    await _logger.LogActionAsync(user, "Create", "NameTags", nameTag.NameTagId.ToString());
                     return Ok(result);
                 }
                 catch (Exception)
@@ -769,46 +771,81 @@ namespace WebIdentityApi.Controllers
         [HttpGet("get-sizes")]
         public async Task<IActionResult> GetSizes()
         {
-            var sizes = await _sizeServices.GetSizes();
-            if (sizes.Count() == 0 || sizes == null)
+            var user = await _userServices.GetCurrentUserAsync();
+            try
             {
-                return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<SizeDto>>()
+                var sizes = await _sizeServices.GetSizes();
+                if (sizes.Count() == 0 || sizes == null)
+                {
+                    return StatusCode(StatusCodes.Status204NoContent, new ResponseView<List<SizeDto>>()
+                    {
+                        Success = false,
+                        Data = null,
+                        Message = "Not have size in list"
+                    });
+                }
+                var sizeDtos = _mapper.Map<List<SizeDto>>(sizes);
+                var result = new ResponseView<List<SizeDto>>()
+                {
+                    Success = true,
+                    Data = sizeDtos,
+                    Message = "Retrive size successfull !"
+                };
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                await _logger.LogActionAsync(user, "Get", "Sizes", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                 {
                     Success = false,
-                    Data = null,
-                    Message = "Not have size in list"
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "Have an occured error while retrive sizes !"
+                    }
                 });
             }
-            var sizeDtos = _mapper.Map<List<SizeDto>>(sizes);
-            var result = new ResponseView<List<SizeDto>>()
-            {
-                Success = true,
-                Data = sizeDtos,
-                Message = "Retrive size successfull !"
-            };
-            return Ok(result);
+
         }
 
         [HttpGet("get-size/{id}")]
         public async Task<IActionResult> GetSizeById(int id)
         {
-            var size = await _sizeServices.GetSizeById(id);
-            if (size == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
+            var user = await _userServices.GetCurrentUserAsync();
+            try
             {
-                Success = false,
-                Error = new ErrorView()
+                var size = await _sizeServices.GetSizeById(id);
+                if (size == null) return StatusCode(StatusCodes.Status404NotFound, new ResponseView()
                 {
-                    Code = "NOT_FOUND",
-                    Message = "Size not found !"
-                }
-            });
-            var result = new ResponseView<Models.Size>()
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "NOT_FOUND",
+                        Message = "Size not found !"
+                    }
+                });
+                var result = new ResponseView<Models.Size>()
+                {
+                    Success = true,
+                    Message = "Get size successfully",
+                    Data = size
+                };
+                return Ok(result);
+            }
+            catch (Exception e)
             {
-                Success = true,
-                Message = "Get size successfully",
-                Data = size
-            };
-            return Ok(result);
+                await _logger.LogActionAsync(user, "Get", "Sizes", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
+                {
+                    Success = false,
+                    Error = new ErrorView()
+                    {
+                        Code = "SERVER_ERROR",
+                        Message = "Have an occured error while get size !"
+                    }
+                });
+            }
         }
         #endregion
 
@@ -916,6 +953,7 @@ namespace WebIdentityApi.Controllers
         [HttpPost("create-product")]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto model)
         {
+            var logs = new List<(User actor, string action, string affectedTable, string objId)>();
             var user = await _userServices.GetCurrentUserAsync();
             if (!ModelState.IsValid)
             {
@@ -932,20 +970,6 @@ namespace WebIdentityApi.Controllers
                 return BadRequest(respone);
             }
             string message;
-            if (user == null)
-            {
-                message = "User not found !";
-                return StatusCode(StatusCodes.Status404NotFound, new ResponseView
-                {
-                    Success = false,
-                    Message = message,
-                    Error = new ErrorView
-                    {
-                        Code = "NOT_FOUND",
-                        Message = message
-                    }
-                });
-            }
             if (await _context.IsExistsAsync<Product>("ProductName", model.ProductName))
             {
                 message = $"Product name {model.ProductName} has been exist, please try with another name";
@@ -963,7 +987,7 @@ namespace WebIdentityApi.Controllers
             if (!await _context.IsExistsAsync<Brand>("BrandId", model.BrandId))
             {
                 message = "Brand does not exist, please try again!";
-                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
                 {
                     Success = false,
                     Message = message,
@@ -979,6 +1003,7 @@ namespace WebIdentityApi.Controllers
                 try
                 {
                     var product = await _productServices.CreateProductAsync(model, model.BrandId, user);
+                    logs.Add((user, "Create", "Products", product.ProductId.ToString()));
                     if (model.NameTagId != null && model.NameTagId.Count > 0)
                     {
                         foreach (var tagId in model.NameTagId)
@@ -987,7 +1012,7 @@ namespace WebIdentityApi.Controllers
                             {
                                 await transaction.RollbackAsync();
                                 message = "Inavalid name tag";
-                                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                                return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
                                 {
                                     Success = false,
                                     Message = message,
@@ -998,7 +1023,9 @@ namespace WebIdentityApi.Controllers
                                     }
                                 });
                             }
-                            await _productServices.CreateProductNameTagAsync(product, tagId);
+                            var productNameTag = await _productServices.CreateProductNameTagAsync(product, tagId);
+                            logs.Add((user, "Create", "ProductNameTags", productNameTag.Id.ToString()));
+
                         }
                     }
                     foreach (var variant in model.Variants)
@@ -1014,7 +1041,7 @@ namespace WebIdentityApi.Controllers
                         {
                             await transaction.RollbackAsync();
                             message = $"Inavalid color id {variant.ColorId}";
-                            return StatusCode(StatusCodes.Status400BadRequest, new ResponseView<Product>
+                            return StatusCode(StatusCodes.Status400BadRequest, new ResponseView()
                             {
                                 Success = false,
                                 Message = message,
@@ -1026,6 +1053,7 @@ namespace WebIdentityApi.Controllers
                             });
                         };
                         var productColor = await _productServices.CreateProductColorAsync(product, variant.ColorId, variant.Price, imagesPath);
+                        await _logger.LogActionAsync(user, "Create", "ProductColors", productColor.ProductColorId.ToString());
 
                         foreach (var size in variant.ProductColorSize)
                         {
@@ -1045,10 +1073,19 @@ namespace WebIdentityApi.Controllers
                                 });
                             }
                             var productColorSize = await _productServices.CreateProductColorSizeAsync(productColor, size.SizeId, size.Quantity);
+                            logs.Add((user, "Create", "ProductColorSizes", productColorSize.ProductColorSizeId.ToString()));
                         }
                     }
                     await transaction.CommitAsync();
-                    // await _system.Log("Product", "Create", null, product, user);
+                    foreach (var log in logs)
+                    {
+                        await _logger.LogActionAsync(
+                            log.actor,
+                            log.action,
+                            log.affectedTable,
+                            log.objId
+                        );
+                    }
                     return StatusCode(StatusCodes.Status200OK, new ResponseView<Product>
                     {
                         Success = true,
@@ -1057,9 +1094,10 @@ namespace WebIdentityApi.Controllers
 
                     });
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     await transaction.RollbackAsync();
+                    await _logger.LogActionAsync(user, "Create", "Products", null, e.ToString(), Serilog.Events.LogEventLevel.Error);
                     return StatusCode(StatusCodes.Status500InternalServerError, new ResponseView()
                     {
                         Success = false,
